@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../api/client.dart';
 import '../api/models.dart';
+import '../widgets/glass.dart';
 
 class RollCallScreen extends StatefulWidget {
   final ApiClient api;
@@ -76,6 +77,17 @@ class _RollCallScreenState extends State<RollCallScreen> {
       initialDate: _date,
       firstDate: DateTime.now().subtract(const Duration(days: 90)),
       lastDate: DateTime.now(),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.accentA,
+            onPrimary: Colors.white,
+            surface: AppColors.bg2,
+            onSurface: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (d != null) setState(() => _date = d);
   }
@@ -104,165 +116,253 @@ class _RollCallScreenState extends State<RollCallScreen> {
     }
   }
 
-  int get _presentCount =>
-      _present.values.where((v) => v).length;
+  int get _presentCount => _present.values.where((v) => v).length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Roll Call'),
-        actions: [
-          IconButton(
-            onPressed: _pickDate,
-            icon: const Icon(Icons.calendar_month_rounded),
-            tooltip: 'Date',
-          ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _err != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+      backgroundColor: Colors.transparent,
+      body: GradientBackground(
+        child: SafeArea(
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.accentA))
+              : _err != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: GlassCard(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  size: 36, color: Colors.white70),
+                              const SizedBox(height: 8),
+                              Text(_err!,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      const TextStyle(color: Colors.white)),
+                              const SizedBox(height: 12),
+                              GradientButton(
+                                label: 'Retry',
+                                onPressed: _loadDivisions,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 10),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : Column(
                       children: [
-                        const Icon(Icons.error_outline_rounded, size: 36),
-                        const SizedBox(height: 8),
-                        Text(_err!, textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
-                        OutlinedButton(
-                          onPressed: _loadDivisions,
-                          child: const Text('Retry'),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+                          child: Row(
+                            children: [
+                              Text('Roll Call',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                          child: GlassCard(
+                            padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _divisionId,
+                                      dropdownColor: AppColors.bg2,
+                                      iconEnabledColor: Colors.white70,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600),
+                                      isExpanded: true,
+                                      items: _divisions
+                                          .map((d) => DropdownMenuItem(
+                                              value: d.id,
+                                              child: Text(d.label)))
+                                          .toList(),
+                                      onChanged: (v) {
+                                        setState(() => _divisionId = v);
+                                        _loadStudents();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 28,
+                                  width: 1,
+                                  color: AppColors.glassStroke,
+                                ),
+                                const SizedBox(width: 8),
+                                TapScale(
+                                  onTap: _pickDate,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.event_rounded,
+                                            color: Colors.white70, size: 18),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          DateFormat('dd MMM').format(_date),
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                          child: GlassCard(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        AppColors.success,
+                                        AppColors.accentD
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                      Icons.fact_check_rounded,
+                                      color: Colors.white,
+                                      size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '$_presentCount present · ${_students.length - _presentCount} absent',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: _students.isEmpty
+                              ? const Center(
+                                  child: Text('No students in this division',
+                                      style: TextStyle(color: AppColors.muted)))
+                              : ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      16, 8, 16, 100),
+                                  itemCount: _students.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (ctx, i) {
+                                    final s = _students[i];
+                                    final isPresent = _present[s.id] ?? true;
+                                    return GlassCard(
+                                      padding: const EdgeInsets.all(12),
+                                      onTap: () => setState(
+                                          () => _present[s.id] = !isPresent),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 44,
+                                            height: 44,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: isPresent
+                                                    ? const [
+                                                        AppColors.success,
+                                                        AppColors.accentD
+                                                      ]
+                                                    : const [
+                                                        AppColors.danger,
+                                                        AppColors.accentA
+                                                      ],
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                            child: Text(s.initials,
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    fontSize: 14)),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(s.name,
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w700)),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                    isPresent
+                                                        ? 'Present'
+                                                        : 'Absent',
+                                                    style: TextStyle(
+                                                        color: isPresent
+                                                            ? AppColors.success
+                                                            : AppColors.danger,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                              ],
+                                            ),
+                                          ),
+                                          Switch.adaptive(
+                                            value: isPresent,
+                                            activeColor: AppColors.success,
+                                            onChanged: (v) => setState(
+                                                () => _present[s.id] = v),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                         ),
                       ],
                     ),
-                  ),
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _divisionId,
-                              decoration: const InputDecoration(
-                                labelText: 'Division',
-                                isDense: true,
-                              ),
-                              items: _divisions
-                                  .map((d) => DropdownMenuItem(
-                                        value: d.id,
-                                        child: Text(d.label),
-                                      ))
-                                  .toList(),
-                              onChanged: (v) {
-                                setState(() => _divisionId = v);
-                                _loadStudents();
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: _pickDate,
-                            icon: const Icon(Icons.event_rounded, size: 18),
-                            label: Text(DateFormat('dd MMM').format(_date)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEF2FF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.fact_check_rounded,
-                                color: Color(0xFF4F46E5)),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$_presentCount present · ${_students.length - _presentCount} absent',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF4F46E5)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: _students.isEmpty
-                          ? const Center(
-                              child: Text('No students in this division'))
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
-                              itemCount: _students.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 6),
-                              itemBuilder: (ctx, i) {
-                                final s = _students[i];
-                                final isPresent = _present[s.id] ?? true;
-                                return Card(
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: Colors.grey.shade200),
-                                  ),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: const Color(0xFFEEF2FF),
-                                      child: Text(s.initials,
-                                          style: const TextStyle(
-                                              color: Color(0xFF4F46E5),
-                                              fontWeight: FontWeight.w700)),
-                                    ),
-                                    title: Text(s.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600)),
-                                    trailing: Switch.adaptive(
-                                      value: isPresent,
-                                      activeColor: const Color(0xFF059669),
-                                      onChanged: (v) =>
-                                          setState(() => _present[s.id] = v),
-                                    ),
-                                    subtitle: Text(isPresent
-                                        ? 'Present'
-                                        : 'Absent'),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-      bottomNavigationBar: _students.isEmpty
+        ),
+      ),
+      bottomNavigationBar: _students.isEmpty || _loading
           ? null
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton.icon(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
+                child: GradientButton(
+                  label: _saving
+                      ? 'Saving…'
+                      : 'Save attendance for ${DateFormat('dd MMM').format(_date)}',
+                  icon: Icons.save_rounded,
                   onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.save_rounded),
-                  label: Text(_saving
-                      ? 'Saving...'
-                      : 'Save attendance for ${DateFormat('dd MMM').format(_date)}'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
+                  busy: _saving,
                 ),
               ),
             ),

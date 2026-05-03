@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../api/client.dart';
 import '../api/models.dart';
+import '../widgets/glass.dart';
+import 'students.dart';
 
 class DashboardScreen extends StatefulWidget {
   final ApiClient api;
@@ -41,104 +43,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = widget.api.user;
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 140,
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+      backgroundColor: Colors.transparent,
+      body: GradientBackground(
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.accentA,
+            backgroundColor: Colors.white,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.accentA, AppColors.accentB],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        (user?.email.isNotEmpty == true ? user!.email[0] : '?')
+                            .toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18),
+                      ),
                     ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    const SizedBox(width: 12),
+                    Expanded(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: Colors.white24,
-                                child: Text(
-                                  (user?.email.isNotEmpty == true
-                                          ? user!.email[0]
-                                          : '?')
-                                      .toUpperCase(),
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Welcome back,',
-                                      style: TextStyle(
-                                          color: Colors.white70, fontSize: 12),
-                                    ),
-                                    Text(
-                                      user?.email ?? '',
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white24,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  user?.role.toUpperCase() ?? '',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ],
-                          ),
+                          const Text('Welcome back',
+                              style: TextStyle(
+                                  color: AppColors.muted, fontSize: 12)),
+                          Text(user?.email ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
-                  ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassFill,
+                        border: Border.all(color: AppColors.glassStroke),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        (user?.role ?? '').toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.0),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverToBoxAdapter(
-                child: FutureBuilder<_DashboardData>(
+                const SizedBox(height: 24),
+                FutureBuilder<_DashboardData>(
                   future: _future,
                   builder: (ctx, snap) {
                     if (snap.connectionState != ConnectionState.done) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 60),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.accentA)),
                       );
                     }
                     if (snap.hasError) {
@@ -155,67 +139,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisCount: 2,
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          childAspectRatio: 1.3,
+                          childAspectRatio: 1.25,
                           children: [
                             _StatCard(
                               icon: Icons.school_rounded,
                               value: '${d.students.length}',
                               label: 'Students',
-                              color: const Color(0xFF2563EB),
-                              bg: const Color(0xFFDBEAFE),
+                              gradient: const [
+                                AppColors.accentA,
+                                AppColors.accentB
+                              ],
                             ),
                             _StatCard(
                               icon: Icons.class_rounded,
                               value: '${d.divisions.length}',
                               label: 'Divisions',
-                              color: const Color(0xFF059669),
-                              bg: const Color(0xFFD1FAE5),
+                              gradient: const [
+                                AppColors.accentC,
+                                AppColors.accentA
+                              ],
                             ),
                             _StatCard(
                               icon: Icons.menu_book_rounded,
                               value: '${d.subjects.length}',
                               label: 'Subjects',
-                              color: const Color(0xFFD97706),
-                              bg: const Color(0xFFFEF3C7),
+                              gradient: const [
+                                AppColors.accentD,
+                                AppColors.accentC
+                              ],
                             ),
                             _StatCard(
-                              icon: Icons.check_circle_rounded,
+                              icon: Icons.fact_check_rounded,
                               value: 'Today',
                               label: 'Roll Call',
-                              color: const Color(0xFF7C3AED),
-                              bg: const Color(0xFFEDE9FE),
+                              gradient: const [
+                                AppColors.success,
+                                AppColors.accentD
+                              ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        Text('Divisions',
-                            style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 8),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: d.divisions
-                                  .map((div) => Chip(
-                                        label: Text(div.label),
-                                        backgroundColor: div.medium == 'english'
-                                            ? const Color(0xFFEEF2FF)
-                                            : const Color(0xFFFEF3C7),
-                                      ))
-                                  .toList(),
-                            ),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 10),
+                          child: Text('Standards',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700)),
+                        ),
+                        GlassCard(
+                          padding: const EdgeInsets.all(14),
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: d.divisions
+                                .map((div) => TapScale(
+                                      onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => StudentsScreen(
+                                            api: widget.api,
+                                            initialDivisionId: div.id,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 14, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: div.medium == 'english'
+                                                ? const [
+                                                    AppColors.accentC,
+                                                    AppColors.accentA
+                                                  ]
+                                                : const [
+                                                    AppColors.accentB,
+                                                    AppColors.accentA
+                                                  ],
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          div.label,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13),
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
                           ),
                         ),
                       ],
                     );
                   },
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -236,51 +260,45 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  final Color color;
-  final Color bg;
+  final List<Color> gradient;
 
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
-    required this.color,
-    required this.bg,
+    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 22),
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: gradient),
+              borderRadius: BorderRadius.circular(12),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.w700)),
-                Text(label,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-              ],
-            ),
-          ],
-        ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800)),
+              Text(label,
+                  style: const TextStyle(
+                      color: AppColors.muted, fontSize: 12)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -293,18 +311,21 @@ class _ErrorBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey),
+          const Icon(Icons.cloud_off_rounded, size: 36, color: Colors.white70),
           const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
+          Text(message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white)),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
+          GradientButton(
+            label: 'Retry',
+            icon: Icons.refresh_rounded,
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           ),
         ],
       ),

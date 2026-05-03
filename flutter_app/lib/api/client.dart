@@ -109,6 +109,22 @@ class ApiClient {
     return jsonDecode(res.body);
   }
 
+  Future<dynamic> _patch(String path, Map<String, dynamic> body) async {
+    final res = await http.patch(
+      Uri.parse('$_apiBase$path'),
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    if (res.statusCode == 401) {
+      await logout();
+      throw ApiException(401, 'session expired');
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+    return jsonDecode(res.body);
+  }
+
   String _errorMessage(http.Response res) {
     try {
       final body = jsonDecode(res.body);
@@ -137,15 +153,133 @@ class ApiClient {
     required String name,
     required String divisionId,
     String? address,
-    String? guardianPhone,
+    String? mobile1,
+    String? mobile2,
+    String? mobile3,
+    String? photoBase64,
+    String? schoolName,
+    String? aadhar,
+    String? reference,
+    DateTime? dob,
+    String? gender,
   }) async {
-    final j = await _post('/students', {
+    final body = <String, dynamic>{
       'name': name,
       'division_id': divisionId,
-      if (address != null) 'address': address,
-      if (guardianPhone != null) 'guardian_phone': guardianPhone,
-    });
+    };
+    void put(String k, Object? v) {
+      if (v != null) body[k] = v;
+    }
+
+    put('address', address);
+    put('mobile_1', mobile1);
+    put('mobile_2', mobile2);
+    put('mobile_3', mobile3);
+    put('photo', photoBase64);
+    put('school_name', schoolName);
+    put('aadhar', aadhar);
+    put('reference', reference);
+    if (dob != null) body['dob'] = _iso(dob);
+    put('gender', gender);
+
+    final j = await _post('/students', body);
     return Student.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<Student> updateStudent({
+    required String id,
+    String? name,
+    String? divisionId,
+    String? address,
+    String? mobile1,
+    String? mobile2,
+    String? mobile3,
+    String? photoBase64,
+    String? schoolName,
+    String? aadhar,
+    String? reference,
+    DateTime? dob,
+    String? gender,
+  }) async {
+    final body = <String, dynamic>{};
+    void put(String k, Object? v) {
+      if (v != null) body[k] = v;
+    }
+
+    put('name', name);
+    put('division_id', divisionId);
+    put('address', address);
+    put('mobile_1', mobile1);
+    put('mobile_2', mobile2);
+    put('mobile_3', mobile3);
+    put('photo', photoBase64);
+    put('school_name', schoolName);
+    put('aadhar', aadhar);
+    put('reference', reference);
+    if (dob != null) body['dob'] = _iso(dob);
+    put('gender', gender);
+
+    final j = await _patch('/students/$id', body);
+    return Student.fromJson(j as Map<String, dynamic>);
+  }
+
+  String _iso(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<List<ExamResult>> results({String? studentId}) async {
+    final qs = studentId != null ? '?student_id=$studentId' : '';
+    final list = await _get('/results$qs') as List;
+    return list.map((j) => ExamResult.fromJson(j)).toList();
+  }
+
+  Future<ExamResult> createResult({
+    required String studentId,
+    required int year,
+    required int month,
+    double? totalMarks,
+    String? photoBase64,
+    List<ResultSubject> subjects = const [],
+  }) async {
+    final j = await _post('/results', {
+      'student_id': studentId,
+      'year': year,
+      'month': month,
+      if (totalMarks != null) 'total_marks': totalMarks,
+      if (photoBase64 != null) 'photo': photoBase64,
+      'subjects': subjects.map((s) => s.toJson()).toList(),
+    });
+    return ExamResult.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<void> deleteResult(String id) async {
+    final res =
+        await http.delete(Uri.parse('$_apiBase/results/$id'), headers: _headers);
+    if (res.statusCode == 401) {
+      await logout();
+      throw ApiException(401, 'session expired');
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+  }
+
+  Future<ResetCounts> resetDivision(String divisionId) async {
+    final j = await _post('/divisions/$divisionId/reset', {'confirm': true});
+    return ResetCounts.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<void> deleteStudent(String id) async {
+    final res = await http.delete(
+      Uri.parse('$_apiBase/students/$id'),
+      headers: _headers,
+    );
+    if (res.statusCode == 401) {
+      await logout();
+      throw ApiException(401, 'session expired');
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
   }
 
   Future<List<Attendance>> attendance({String? studentId, String? date}) async {

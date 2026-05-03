@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/client.dart';
+import '../widgets/glass.dart';
 import 'home.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,8 +14,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _email = TextEditingController(text: 'admin@school.local');
-  final _password = TextEditingController(text: 'admin123');
+  final _email = TextEditingController(text: 'VijayPatil');
+  final _password = TextEditingController(text: 'Welcome1');
   bool _busy = false;
   String? _err;
 
@@ -48,123 +49,118 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
-          ),
-        ),
+      body: GradientBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-              child: Card(
-                elevation: 12,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: GlassCard(
+                padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+                borderRadius: 28,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.accentA, AppColors.accentB],
                           ),
-                          child: Icon(Icons.school_rounded,
-                              size: 36, color: theme.colorScheme.primary),
-                        ),
-                        const SizedBox(height: 16),
-                        Text('Gurukul',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 4),
-                        Text('Sign in to continue',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(color: theme.colorScheme.outline)),
-                        const SizedBox(height: 28),
-                        TextFormField(
-                          controller: _email,
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            prefixIcon: Icon(Icons.mail_outline_rounded),
-                          ),
-                          validator: (v) => (v == null || !v.contains('@'))
-                              ? 'Enter a valid email'
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _password,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline_rounded),
-                          ),
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? 'Required' : null,
-                        ),
-                        if (_err != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.errorContainer,
-                              borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accentA.withValues(alpha: 0.4),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.error_outline_rounded,
-                                    size: 18,
-                                    color: theme.colorScheme.onErrorContainer),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(_err!,
-                                      style: TextStyle(
-                                          color: theme.colorScheme.onErrorContainer,
-                                          fontSize: 13)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: _busy ? null : _submit,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: _busy
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white))
-                              : const Text('Sign In',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'API: ${widget.api.apiBase}',
+                        child: const Icon(Icons.public_rounded,
+                            color: Colors.white, size: 38),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text('Gravity',
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.outline),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4)),
+                      const SizedBox(height: 4),
+                      const Text('Sign in to continue',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.muted, fontSize: 13)),
+                      const SizedBox(height: 28),
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.text,
+                        autocorrect: false,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: glassInputDecoration(
+                          label: 'Username or email',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Required'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: true,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: glassInputDecoration(
+                          label: 'Password',
+                          icon: Icons.lock_outline_rounded,
+                        ),
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? 'Required' : null,
+                      ),
+                      if (_err != null) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger.withValues(alpha: 0.15),
+                            border: Border.all(
+                                color: AppColors.danger.withValues(alpha: 0.5)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  size: 18, color: AppColors.danger),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(_err!,
+                                    style: const TextStyle(
+                                        color: AppColors.danger,
+                                        fontSize: 13)),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 24),
+                      GradientButton(
+                        label: 'Sign In',
+                        onPressed: _busy ? null : _submit,
+                        busy: _busy,
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        widget.api.apiBase,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            color: AppColors.muted, fontSize: 11),
+                      ),
+                    ],
                   ),
                 ),
               ),

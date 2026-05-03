@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/client.dart';
+import '../widgets/glass.dart';
 import 'login.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -20,84 +21,157 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final u = api.user;
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: const Color(0xFFEEF2FF),
-                    child: Text(
-                      (u?.email.isNotEmpty == true
-                              ? u!.email[0]
-                              : '?')
-                          .toUpperCase(),
-                      style: const TextStyle(
-                          color: Color(0xFF4F46E5),
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(u?.email ?? '',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      (u?.role ?? '').toUpperCase(),
-                      style: const TextStyle(
-                          color: Color(0xFF4F46E5),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
+      backgroundColor: Colors.transparent,
+      body: GradientBackground(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text('Profile',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800)),
               ),
-            ),
+              GlassCard(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.accentA, AppColors.accentB],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accentA.withValues(alpha: 0.4),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        (u?.email.isNotEmpty == true ? u!.email[0] : '?')
+                            .toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(u?.email ?? '',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.accentC, AppColors.accentA],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        (u?.role ?? '').toUpperCase(),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              GlassCard(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: Column(
+                  children: [
+                    _Tile(
+                      icon: Icons.cloud_done_rounded,
+                      title: 'API endpoint',
+                      subtitle: api.apiBase,
+                    ),
+                    const Divider(
+                        height: 0, color: AppColors.glassStroke, indent: 16, endIndent: 16),
+                    _Tile(
+                      icon: Icons.logout_rounded,
+                      title: 'Sign out',
+                      titleColor: AppColors.danger,
+                      iconColor: AppColors.danger,
+                      onTap: () => _logout(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
-            ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Color? titleColor;
+  final Color? iconColor;
+  final VoidCallback? onTap;
+
+  const _Tile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+    this.iconColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor ?? Colors.white70, size: 22),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.cloud_done_rounded),
-                  title: const Text('API'),
-                  subtitle: Text(api.apiBase),
-                ),
-                const Divider(height: 0),
-                ListTile(
-                  leading: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
-                  title: const Text('Sign out',
-                      style: TextStyle(color: Color(0xFFEF4444))),
-                  onTap: () => _logout(context),
-                ),
+                Text(title,
+                    style: TextStyle(
+                        color: titleColor ?? Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!,
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12)),
+                ],
               ],
             ),
           ),
+          if (onTap != null)
+            const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
         ],
       ),
     );
+    if (onTap == null) return tile;
+    return TapScale(onTap: onTap!, child: tile);
   }
 }
