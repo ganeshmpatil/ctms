@@ -79,10 +79,10 @@ class _RollCallScreenState extends State<RollCallScreen> {
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.accentA,
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
             onPrimary: Colors.white,
-            surface: AppColors.bg2,
+            surface: AppColors.surface,
             onSurface: Colors.white,
           ),
         ),
@@ -125,8 +125,8 @@ class _RollCallScreenState extends State<RollCallScreen> {
       body: GradientBackground(
         child: SafeArea(
           child: _loading
-              ? const Center(
-                  child: CircularProgressIndicator(color: AppColors.accentA))
+              ? Center(
+                  child: CircularProgressIndicator(color: AppColors.primary))
               : _err != null
                   ? Center(
                       child: Padding(
@@ -236,10 +236,10 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
                                         AppColors.success,
-                                        AppColors.accentD
+                                        AppColors.accent
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(10),
@@ -289,13 +289,13 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                             decoration: BoxDecoration(
                                               gradient: LinearGradient(
                                                 colors: isPresent
-                                                    ? const [
+                                                    ? [
                                                         AppColors.success,
-                                                        AppColors.accentD
+                                                        AppColors.accent
                                                       ]
-                                                    : const [
+                                                    : [
                                                         AppColors.danger,
-                                                        AppColors.accentA
+                                                        AppColors.primary
                                                       ],
                                               ),
                                               borderRadius:

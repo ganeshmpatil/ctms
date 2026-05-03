@@ -187,6 +187,42 @@ class ExamResult {
       );
 }
 
+class Lead {
+  final String id;
+  final String query;
+  final String? raisedBy;
+  final String? contactNumber;
+  final String status;
+  final bool isResolved;
+  final String? comments;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  Lead({
+    required this.id,
+    required this.query,
+    required this.status,
+    required this.isResolved,
+    required this.createdAt,
+    required this.updatedAt,
+    this.raisedBy,
+    this.contactNumber,
+    this.comments,
+  });
+
+  factory Lead.fromJson(Map<String, dynamic> j) => Lead(
+        id: j['id'],
+        query: j['query'],
+        raisedBy: j['lead_raised_by'],
+        contactNumber: j['lead_raised_by_contact_number'],
+        status: j['status'] ?? 'open',
+        isResolved: j['is_resolved'] == true,
+        comments: j['comments'],
+        createdAt: DateTime.parse(j['created_at']),
+        updatedAt: DateTime.parse(j['updated_at']),
+      );
+}
+
 class ResetCounts {
   final int studentsUnassigned;
   final int attendanceDeleted;

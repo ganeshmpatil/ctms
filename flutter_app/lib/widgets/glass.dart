@@ -1,99 +1,143 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-/// Brand color palette — inspired by deep-dark glassmorphism mockups.
-class AppColors {
-  static const bg1 = Color(0xFF0B0F1F);
-  static const bg2 = Color(0xFF1B1238);
-  static const bg3 = Color(0xFF120B26);
+/// Color palette — one entry per selectable theme.
+class AppPalette {
+  final String name;
+  final Color primary;
+  final Color primaryDark;
+  final Color primaryLight;
+  final Color accent;
+  final Color accentLight;
+  final Color accentC; // pink/secondary accent for gradients
+  final Color accentD; // tertiary accent for gradients
 
-  static const accentA = Color(0xFFEC4899); // pink
-  static const accentB = Color(0xFFF59E0B); // orange
-  static const accentC = Color(0xFF8B5CF6); // purple
-  static const accentD = Color(0xFF22D3EE); // cyan
-
-  static const success = Color(0xFF10B981);
-  static const danger = Color(0xFFEF4444);
-
-  static const glassFill = Color(0x22FFFFFF);
-  static const glassStroke = Color(0x33FFFFFF);
-  static const muted = Color(0xB3FFFFFF); // 70% white
+  const AppPalette({
+    required this.name,
+    required this.primary,
+    required this.primaryDark,
+    required this.primaryLight,
+    required this.accent,
+    required this.accentLight,
+    required this.accentC,
+    required this.accentD,
+  });
 }
 
-/// Full-screen background: dark gradient + animated blurred color blobs.
+const palettes = <AppPalette>[
+  AppPalette(
+    name: 'Violet',
+    primary: Color(0xFF7C3AED),
+    primaryDark: Color(0xFF5B21B6),
+    primaryLight: Color(0xFFEDE9FE),
+    accent: Color(0xFF2563EB),
+    accentLight: Color(0xFFDBEAFE),
+    accentC: Color(0xFFEC4899),
+    accentD: Color(0xFF06B6D4),
+  ),
+  AppPalette(
+    name: 'Ocean',
+    primary: Color(0xFF2563EB),
+    primaryDark: Color(0xFF1E3A8A),
+    primaryLight: Color(0xFFDBEAFE),
+    accent: Color(0xFF06B6D4),
+    accentLight: Color(0xFFCFFAFE),
+    accentC: Color(0xFF8B5CF6),
+    accentD: Color(0xFF14B8A6),
+  ),
+  AppPalette(
+    name: 'Forest',
+    primary: Color(0xFF059669),
+    primaryDark: Color(0xFF065F46),
+    primaryLight: Color(0xFFD1FAE5),
+    accent: Color(0xFF14B8A6),
+    accentLight: Color(0xFFCCFBF1),
+    accentC: Color(0xFFF59E0B),
+    accentD: Color(0xFF06B6D4),
+  ),
+  AppPalette(
+    name: 'Coral',
+    primary: Color(0xFFE11D48),
+    primaryDark: Color(0xFF9F1239),
+    primaryLight: Color(0xFFFFE4E6),
+    accent: Color(0xFFF59E0B),
+    accentLight: Color(0xFFFEF3C7),
+    accentC: Color(0xFFEC4899),
+    accentD: Color(0xFFEF4444),
+  ),
+  AppPalette(
+    name: 'Indigo',
+    primary: Color(0xFF4F46E5),
+    primaryDark: Color(0xFF312E81),
+    primaryLight: Color(0xFFE0E7FF),
+    accent: Color(0xFF06B6D4),
+    accentLight: Color(0xFFCFFAFE),
+    accentC: Color(0xFF8B5CF6),
+    accentD: Color(0xFFEC4899),
+  ),
+];
+
+/// Singleton holder for the active palette. Mutated by ThemeController.
+class _PaletteHolder {
+  AppPalette current = palettes.first;
+}
+
+final _palette = _PaletteHolder();
+
+void setActivePalette(AppPalette p) {
+  _palette.current = p;
+}
+
+AppPalette get activePalette => _palette.current;
+
+/// All-app color tokens — getters so they reflect the current palette.
+class AppColors {
+  // Brand
+  static Color get primary => _palette.current.primary;
+  static Color get primaryDark => _palette.current.primaryDark;
+  static Color get primaryLight => _palette.current.primaryLight;
+  static Color get accent => _palette.current.accent;
+  static Color get accentLight => _palette.current.accentLight;
+  static Color get accentA => _palette.current.primary;
+  static Color get accentB => _palette.current.accent;
+  static Color get accentC => _palette.current.accentC;
+  static Color get accentD => _palette.current.accentD;
+
+  // Surface
+  static const bg1 = Color(0xFFF8FAFC);
+  static const bg2 = Color(0xFFF1F5F9);
+  static const bg3 = Color(0xFFEEF2FF);
+  static const surface = Colors.white;
+
+  // Text
+  static const text = Color(0xFF0F172A);
+  static const muted = Color(0xFF64748B);
+  static const outline = Color(0xFFE2E8F0);
+
+  // Status
+  static const success = Color(0xFF059669);
+  static const successLight = Color(0xFFD1FAE5);
+  static const warning = Color(0xFFD97706);
+  static const warningLight = Color(0xFFFEF3C7);
+  static const danger = Color(0xFFDC2626);
+  static const dangerLight = Color(0xFFFEE2E2);
+
+  // Compat aliases
+  static const glassFill = bg2;
+  static const glassStroke = outline;
+}
+
+/// Page background — solid light grey.
 class GradientBackground extends StatelessWidget {
   final Widget child;
   const GradientBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.bg1, AppColors.bg2, AppColors.bg3],
-              ),
-            ),
-          ),
-        ),
-        const _Blob(
-            top: -120, left: -80, size: 320, color: AppColors.accentA, opacity: 0.45),
-        const _Blob(
-            top: 200, right: -120, size: 280, color: AppColors.accentC, opacity: 0.35),
-        const _Blob(
-            bottom: -100, left: 80, size: 300, color: AppColors.accentB, opacity: 0.28),
-        Positioned.fill(child: child),
-      ],
-    );
+    return Container(color: AppColors.bg1, child: child);
   }
 }
 
-class _Blob extends StatelessWidget {
-  final double? top, left, right, bottom;
-  final double size;
-  final Color color;
-  final double opacity;
-  const _Blob({
-    this.top,
-    this.left,
-    this.right,
-    this.bottom,
-    required this.size,
-    required this.color,
-    required this.opacity,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: top,
-      left: left,
-      right: right,
-      bottom: bottom,
-      child: IgnorePointer(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: opacity),
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-            child: const SizedBox.expand(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Frosted-glass surface — backdrop blur + semi-transparent fill + 1px border.
+/// Clean white card with a subtle outline + shadow.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -105,7 +149,7 @@ class GlassCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.borderRadius = 20,
+    this.borderRadius = 16,
     this.onTap,
     this.tint,
   });
@@ -113,30 +157,28 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(borderRadius);
-    Widget card = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: tint ?? AppColors.glassFill,
-            border: Border.all(color: AppColors.glassStroke, width: 1),
-            borderRadius: radius,
+    final card = Container(
+      decoration: BoxDecoration(
+        color: tint ?? AppColors.surface,
+        borderRadius: radius,
+        border: Border.all(color: AppColors.outline, width: 0.6),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 2),
           ),
-          padding: padding,
-          child: child,
-        ),
+        ],
       ),
+      padding: padding,
+      child: child,
     );
     if (onTap == null) return card;
-    return TapScale(
-      onTap: onTap!,
-      child: card,
-    );
+    return TapScale(onTap: onTap!, child: card);
   }
 }
 
-/// Wraps any child with a "press shrinks slightly" animation.
+/// Tactile press feedback — scales the child slightly on tap-down.
 class TapScale extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -147,8 +189,8 @@ class TapScale extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
-    this.pressedScale = 0.96,
-    this.duration = const Duration(milliseconds: 140),
+    this.pressedScale = 0.97,
+    this.duration = const Duration(milliseconds: 130),
   });
 
   @override
@@ -176,7 +218,7 @@ class _TapScaleState extends State<TapScale> {
   }
 }
 
-/// Pink→orange gradient pill, used as the primary call-to-action button.
+/// Solid primary button. (Kept the "Gradient" name for backward compat.)
 class GradientButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -190,7 +232,7 @@ class GradientButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.busy = false,
-    this.padding = const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+    this.padding = const EdgeInsets.symmetric(vertical: 14, horizontal: 22),
   });
 
   @override
@@ -203,15 +245,13 @@ class GradientButton extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.accentA, AppColors.accentB],
-            ),
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.accentA.withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+                color: AppColors.primary.withValues(alpha: 0.30),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -248,7 +288,6 @@ class GradientButton extends StatelessWidget {
   }
 }
 
-/// Frosted-glass text field (input fields used inside cards).
 InputDecoration glassInputDecoration({
   required String label,
   IconData? icon,
@@ -256,20 +295,21 @@ InputDecoration glassInputDecoration({
   return InputDecoration(
     labelText: label,
     labelStyle: const TextStyle(color: AppColors.muted),
-    prefixIcon: icon != null ? Icon(icon, color: AppColors.muted, size: 20) : null,
+    prefixIcon:
+        icon != null ? Icon(icon, color: AppColors.muted, size: 20) : null,
     filled: true,
-    fillColor: const Color(0x14FFFFFF),
+    fillColor: AppColors.bg2,
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassStroke),
+      borderSide: const BorderSide(color: AppColors.outline),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.accentA, width: 1.4),
+      borderSide: BorderSide(color: AppColors.primary, width: 1.4),
     ),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.glassStroke),
+      borderSide: const BorderSide(color: AppColors.outline),
     ),
     isDense: true,
   );

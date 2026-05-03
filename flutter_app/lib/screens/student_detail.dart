@@ -5,6 +5,7 @@ import '../api/client.dart';
 import '../api/models.dart';
 import '../widgets/glass.dart';
 import '../widgets/photo_picker.dart';
+import 'attendance_calendar.dart';
 import 'result_upload.dart';
 
 class StudentDetailScreen extends StatefulWidget {
@@ -202,14 +203,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                         Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [AppColors.accentA, AppColors.accentB],
+                            gradient: LinearGradient(
+                              colors: [AppColors.primary, AppColors.accent],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
                                 color:
-                                    AppColors.accentA.withValues(alpha: 0.4),
+                                    AppColors.primary.withValues(alpha: 0.4),
                                 blurRadius: 22,
                                 offset: const Offset(0, 8),
                               ),
@@ -255,91 +256,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
             controller: _tab,
             children: [
               _InfoTab(student: s, divisionLabel: _divisionLabel),
-              FutureBuilder<List<Attendance>>(
-                future: _attendance,
-                builder: (ctx, snap) {
-                  if (snap.connectionState != ConnectionState.done) {
-                    return const Center(
-                        child: CircularProgressIndicator(
-                            color: AppColors.accentA));
-                  }
-                  if (snap.hasError) {
-                    return Center(
-                        child: Text(snap.error.toString(),
-                            style: const TextStyle(color: Colors.white70)));
-                  }
-                  final list = snap.data!;
-                  if (list.isEmpty) {
-                    return const Center(
-                        child: Text('No attendance records yet',
-                            style: TextStyle(color: AppColors.muted)));
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: list.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (ctx, i) {
-                      final a = list[i];
-                      return GlassCard(
-                        padding: const EdgeInsets.all(14),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: a.isPresent
-                                      ? [AppColors.success, AppColors.accentD]
-                                      : [AppColors.danger, AppColors.accentA],
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                a.isPresent
-                                    ? Icons.check_rounded
-                                    : Icons.close_rounded,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    DateFormat('EEE, dd MMM yyyy').format(a.date),
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    a.isPresent
-                                        ? 'Present'
-                                        : (a.absentReason ?? 'Absent'),
-                                    style: const TextStyle(
-                                        color: AppColors.muted, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+              AttendanceCalendarView(api: widget.api, student: _student),
               FutureBuilder<List<ExamResult>>(
                 future: _results,
                 builder: (ctx, snap) {
                   if (snap.connectionState != ConnectionState.done) {
-                    return const Center(
+                    return Center(
                         child: CircularProgressIndicator(
-                            color: AppColors.accentA));
+                            color: AppColors.primary));
                   }
                   if (snap.hasError) {
                     return Center(
@@ -380,10 +304,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
+                                          gradient: LinearGradient(
                                               colors: [
-                                                AppColors.accentC,
-                                                AppColors.accentA
+                                                AppColors.accent,
+                                                AppColors.primary
                                               ]),
                                           borderRadius:
                                               BorderRadius.circular(8),
@@ -540,8 +464,8 @@ class _InfoTab extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.accentC, AppColors.accentA],
+                  gradient: LinearGradient(
+                    colors: [AppColors.accent, AppColors.primary],
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -644,11 +568,11 @@ class _EditStudentSheetState extends State<_EditStudentSheet> {
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.accentA,
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
             onPrimary: Colors.white,
-            surface: AppColors.bg2,
-            onSurface: Colors.white,
+            surface: AppColors.surface,
+            onSurface: AppColors.text,
           ),
         ),
         child: child!,
@@ -702,13 +626,17 @@ class _EditStudentSheetState extends State<_EditStudentSheet> {
   @override
   Widget build(BuildContext context) {
     final inset = MediaQuery.of(context).viewInsets.bottom;
+    final maxH = MediaQuery.of(context).size.height * 0.88;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + inset),
-      child: GlassCard(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        tint: AppColors.bg2.withValues(alpha: 0.85),
-        child: Form(
-          key: _formKey,
+      padding: EdgeInsets.fromLTRB(0, 0, 0, inset),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -717,171 +645,181 @@ class _EditStudentSheetState extends State<_EditStudentSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: AppColors.outline,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const Text('Edit student',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.text,
                       fontSize: 18,
                       fontWeight: FontWeight.w700)),
               const SizedBox(height: 16),
-              Center(
-                child: TapScale(
-                  onTap: _pickPhoto,
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      PhotoAvatar(
-                        base64: _photoBase64,
-                        fallbackInitials: widget.student.initials,
-                        radius: 40,
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.accentA, AppColors.accentB],
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: TapScale(
+                            onTap: _pickPhoto,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                PhotoAvatar(
+                                  base64: _photoBase64,
+                                  fallbackInitials: widget.student.initials,
+                                  radius: 40,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppColors.surface, width: 2),
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded,
+                                      size: 14, color: Colors.white),
+                                ),
+                              ],
+                            ),
                           ),
-                          shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.camera_alt_rounded,
-                            size: 14, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _name,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Name'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _divisionId,
-                dropdownColor: AppColors.bg2,
-                style: const TextStyle(color: Colors.white),
-                iconEnabledColor: Colors.white70,
-                decoration: glassInputDecoration(label: 'Division'),
-                items: widget.divisions
-                    .map((d) =>
-                        DropdownMenuItem(value: d.id, child: Text(d.label)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) setState(() => _divisionId = v);
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _gender,
-                      dropdownColor: AppColors.bg2,
-                      style: const TextStyle(color: Colors.white),
-                      iconEnabledColor: Colors.white70,
-                      decoration: glassInputDecoration(label: 'Gender'),
-                      items: const [
-                        DropdownMenuItem(value: 'male', child: Text('Male')),
-                        DropdownMenuItem(value: 'female', child: Text('Female')),
-                        DropdownMenuItem(value: 'other', child: Text('Other')),
-                      ],
-                      onChanged: (v) => setState(() => _gender = v),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TapScale(
-                      onTap: _pickDob,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: const Color(0x14FFFFFF),
-                          border: Border.all(color: AppColors.glassStroke),
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _name,
+                          decoration: glassInputDecoration(label: 'Name'),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty) ? 'Required' : null,
                         ),
-                        child: Row(
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: _divisionId,
+                          decoration: glassInputDecoration(label: 'Division'),
+                          items: widget.divisions
+                              .map((d) => DropdownMenuItem(
+                                  value: d.id, child: Text(d.label)))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v != null) setState(() => _divisionId = v);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
                           children: [
-                            const Icon(Icons.cake_rounded,
-                                size: 18, color: AppColors.muted),
-                            const SizedBox(width: 8),
-                            Text(
-                              _dob == null
-                                  ? 'DOB'
-                                  : DateFormat('dd MMM yyyy').format(_dob!),
-                              style: TextStyle(
-                                color: _dob == null
-                                    ? AppColors.muted
-                                    : Colors.white,
-                                fontSize: 13,
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _gender,
+                                decoration:
+                                    glassInputDecoration(label: 'Gender'),
+                                items: const [
+                                  DropdownMenuItem(
+                                      value: 'male', child: Text('Male')),
+                                  DropdownMenuItem(
+                                      value: 'female', child: Text('Female')),
+                                  DropdownMenuItem(
+                                      value: 'other', child: Text('Other')),
+                                ],
+                                onChanged: (v) => setState(() => _gender = v),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TapScale(
+                                onTap: _pickDob,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.bg2,
+                                    border:
+                                        Border.all(color: AppColors.outline),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.cake_rounded,
+                                          size: 18, color: AppColors.muted),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _dob == null
+                                            ? 'DOB'
+                                            : DateFormat('dd MMM yyyy')
+                                                .format(_dob!),
+                                        style: TextStyle(
+                                          color: _dob == null
+                                              ? AppColors.muted
+                                              : AppColors.text,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile1,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #1', icon: Icons.phone_rounded),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile2,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #2 (optional)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile3,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #3 (optional)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _aadhar,
+                          keyboardType: TextInputType.number,
+                          decoration:
+                              glassInputDecoration(label: 'Aadhar number'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _schoolName,
+                          decoration:
+                              glassInputDecoration(label: 'School name'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _address,
+                          decoration: glassInputDecoration(label: 'Address'),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _reference,
+                          decoration:
+                              glassInputDecoration(label: 'Reference (optional)'),
+                          maxLines: 2,
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _mobile1,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(
-                    label: 'Mobile #1', icon: Icons.phone_rounded),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _mobile2,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Mobile #2 (optional)'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _mobile3,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Mobile #3 (optional)'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _aadhar,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Aadhar number'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _schoolName,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'School name'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _address,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Address'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _reference,
-                style: const TextStyle(color: Colors.white),
-                decoration: glassInputDecoration(label: 'Reference (optional)'),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               GradientButton(
                 label: 'Save',
                 onPressed: _busy ? null : _save,

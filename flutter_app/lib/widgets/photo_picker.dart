@@ -95,9 +95,9 @@ class PhotoAvatar extends StatelessWidget {
       width: radius * 2,
       height: radius * 2,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.accentA, AppColors.accentB],
+          colors: [AppColors.primary, AppColors.accent],
         ),
         shape: BoxShape.circle,
       ),

@@ -138,9 +138,95 @@ class ApiClient {
     return list.map((j) => Division.fromJson(j)).toList();
   }
 
+  Future<Division> createDivision({required int standard, required String medium}) async {
+    final j = await _post('/divisions', {'standard': standard, 'medium': medium});
+    return Division.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<Division> updateDivision({
+    required String id,
+    int? standard,
+    String? medium,
+  }) async {
+    final body = <String, dynamic>{};
+    if (standard != null) body['standard'] = standard;
+    if (medium != null) body['medium'] = medium;
+    final j = await _patch('/divisions/$id', body);
+    return Division.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<void> deleteDivision(String id) async {
+    await _delete('/divisions/$id');
+  }
+
   Future<List<Subject>> subjects() async {
     final list = await _get('/subjects') as List;
     return list.map((j) => Subject.fromJson(j)).toList();
+  }
+
+  Future<Subject> createSubject({
+    required String description,
+    bool isEnglish = false,
+    bool isHindi = false,
+  }) async {
+    final j = await _post('/subjects', {
+      'description': description,
+      'is_english': isEnglish,
+      'is_hindi': isHindi,
+    });
+    return Subject.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<void> deleteSubject(String id) async {
+    await _delete('/subjects/$id');
+  }
+
+  // Leads
+  Future<List<Lead>> leads({String? status}) async {
+    final qs = status != null ? '?status=$status' : '';
+    final list = await _get('/leads$qs') as List;
+    return list.map((j) => Lead.fromJson(j)).toList();
+  }
+
+  Future<Lead> createLead({
+    required String query,
+    String? raisedBy,
+    String? contactNumber,
+    String? comments,
+  }) async {
+    final j = await _post('/leads', {
+      'query': query,
+      if (raisedBy != null) 'lead_raised_by': raisedBy,
+      if (contactNumber != null) 'lead_raised_by_contact_number': contactNumber,
+      if (comments != null) 'comments': comments,
+    });
+    return Lead.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<Lead> updateLead({
+    required String id,
+    String? status,
+    bool? isResolved,
+    String? comments,
+  }) async {
+    final body = <String, dynamic>{};
+    if (status != null) body['status'] = status;
+    if (isResolved != null) body['is_resolved'] = isResolved;
+    if (comments != null) body['comments'] = comments;
+    final j = await _patch('/leads/$id', body);
+    return Lead.fromJson(j as Map<String, dynamic>);
+  }
+
+  Future<void> _delete(String path) async {
+    final res =
+        await http.delete(Uri.parse('$_apiBase$path'), headers: _headers);
+    if (res.statusCode == 401) {
+      await logout();
+      throw ApiException(401, 'session expired');
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
   }
 
   Future<List<Student>> students({String? divisionId}) async {

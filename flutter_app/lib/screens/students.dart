@@ -238,9 +238,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
               const SizedBox(height: 4),
               Expanded(
                 child: _loading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
-                            color: AppColors.accentA))
+                            color: AppColors.primary))
                     : _err != null
                         ? Center(
                             child: Padding(
@@ -361,8 +361,8 @@ class _DivisionChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
           decoration: BoxDecoration(
             gradient: selected
-                ? const LinearGradient(
-                    colors: [AppColors.accentA, AppColors.accentB])
+                ? LinearGradient(
+                    colors: [AppColors.primary, AppColors.accent])
                 : null,
             color: selected ? null : AppColors.glassFill,
             border: Border.all(
@@ -418,8 +418,8 @@ class _StudentTile extends StatelessWidget {
             height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.accentC, AppColors.accentA],
+              gradient: LinearGradient(
+                colors: [AppColors.accent, AppColors.primary],
               ),
               borderRadius: BorderRadius.circular(14),
             ),
@@ -505,11 +505,11 @@ class _CreateStudentSheetState extends State<_CreateStudentSheet> {
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.accentA,
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
             onPrimary: Colors.white,
-            surface: AppColors.bg2,
-            onSurface: Colors.white,
+            surface: AppColors.surface,
+            onSurface: AppColors.text,
           ),
         ),
         child: child!,
@@ -550,197 +550,206 @@ class _CreateStudentSheetState extends State<_CreateStudentSheet> {
   @override
   Widget build(BuildContext context) {
     final inset = MediaQuery.of(context).viewInsets.bottom;
+    final maxH = MediaQuery.of(context).size.height * 0.88;
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 16 + inset),
-      child: GlassCard(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        tint: AppColors.bg2.withValues(alpha: 0.85),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      padding: EdgeInsets.fromLTRB(0, 0, 0, inset),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.outline,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const Text('New student',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(height: 16),
-                Center(
-                  child: TapScale(
-                    onTap: _pickPhoto,
-                    child: Stack(
-                      alignment: Alignment.bottomRight,
+              ),
+              const Text('New student',
+                  style: TextStyle(
+                      color: AppColors.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        PhotoAvatar(
-                          base64: _photoBase64,
-                          fallbackInitials: '+',
-                          radius: 44,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppColors.accentA, AppColors.accentB],
+                        Center(
+                          child: TapScale(
+                            onTap: _pickPhoto,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                PhotoAvatar(
+                                  base64: _photoBase64,
+                                  fallbackInitials: '+',
+                                  radius: 44,
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: AppColors.surface, width: 2),
+                                  ),
+                                  child: const Icon(Icons.camera_alt_rounded,
+                                      size: 14, color: Colors.white),
+                                ),
+                              ],
                             ),
-                            shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt_rounded,
-                              size: 14, color: Colors.white),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _name,
+                          decoration: glassInputDecoration(label: 'Name'),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: _divisionId,
+                          decoration: glassInputDecoration(label: 'Division'),
+                          items: widget.divisions
+                              .map((d) => DropdownMenuItem(
+                                  value: d.id, child: Text(d.label)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _divisionId = v),
+                          validator: (v) => v == null ? 'Pick a division' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _gender,
+                                decoration:
+                                    glassInputDecoration(label: 'Gender'),
+                                items: const [
+                                  DropdownMenuItem(
+                                      value: 'male', child: Text('Male')),
+                                  DropdownMenuItem(
+                                      value: 'female', child: Text('Female')),
+                                  DropdownMenuItem(
+                                      value: 'other', child: Text('Other')),
+                                ],
+                                onChanged: (v) => setState(() => _gender = v),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TapScale(
+                                onTap: _pickDob,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.bg2,
+                                    border:
+                                        Border.all(color: AppColors.outline),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.cake_rounded,
+                                          size: 18, color: AppColors.muted),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _dob == null
+                                            ? 'Date of birth'
+                                            : DateFormat('dd MMM yyyy')
+                                                .format(_dob!),
+                                        style: TextStyle(
+                                          color: _dob == null
+                                              ? AppColors.muted
+                                              : AppColors.text,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile1,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #1', icon: Icons.phone_rounded),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile2,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #2 (optional)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _mobile3,
+                          keyboardType: TextInputType.phone,
+                          decoration: glassInputDecoration(
+                              label: 'Mobile #3 (optional)'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _aadhar,
+                          keyboardType: TextInputType.number,
+                          decoration:
+                              glassInputDecoration(label: 'Aadhar number'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _schoolName,
+                          decoration:
+                              glassInputDecoration(label: 'School name'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _address,
+                          decoration: glassInputDecoration(
+                              label: 'Address (optional)'),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _reference,
+                          decoration: glassInputDecoration(
+                              label: 'Reference (optional)'),
+                          maxLines: 2,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _name,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: glassInputDecoration(label: 'Name'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _divisionId,
-                  dropdownColor: AppColors.bg2,
-                  style: const TextStyle(color: Colors.white),
-                  iconEnabledColor: Colors.white70,
-                  decoration: glassInputDecoration(label: 'Division'),
-                  items: widget.divisions
-                      .map((d) =>
-                          DropdownMenuItem(value: d.id, child: Text(d.label)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _divisionId = v),
-                  validator: (v) => v == null ? 'Pick a division' : null,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _gender,
-                        dropdownColor: AppColors.bg2,
-                        style: const TextStyle(color: Colors.white),
-                        iconEnabledColor: Colors.white70,
-                        decoration: glassInputDecoration(label: 'Gender'),
-                        items: const [
-                          DropdownMenuItem(value: 'male', child: Text('Male')),
-                          DropdownMenuItem(value: 'female', child: Text('Female')),
-                          DropdownMenuItem(value: 'other', child: Text('Other')),
-                        ],
-                        onChanged: (v) => setState(() => _gender = v),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TapScale(
-                        onTap: _pickDob,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: const Color(0x14FFFFFF),
-                            border: Border.all(color: AppColors.glassStroke),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.cake_rounded,
-                                  size: 18, color: AppColors.muted),
-                              const SizedBox(width: 8),
-                              Text(
-                                _dob == null
-                                    ? 'Date of birth'
-                                    : DateFormat('dd MMM yyyy').format(_dob!),
-                                style: TextStyle(
-                                  color: _dob == null
-                                      ? AppColors.muted
-                                      : Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _mobile1,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: glassInputDecoration(
-                      label: 'Mobile #1', icon: Icons.phone_rounded),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _mobile2,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white),
-                  decoration:
-                      glassInputDecoration(label: 'Mobile #2 (optional)'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _mobile3,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white),
-                  decoration:
-                      glassInputDecoration(label: 'Mobile #3 (optional)'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _aadhar,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: glassInputDecoration(label: 'Aadhar number'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _schoolName,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: glassInputDecoration(label: 'School name'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _address,
-                  style: const TextStyle(color: Colors.white),
-                  decoration:
-                      glassInputDecoration(label: 'Address (optional)'),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _reference,
-                  style: const TextStyle(color: Colors.white),
-                  decoration:
-                      glassInputDecoration(label: 'Reference (optional)'),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 20),
-                GradientButton(
-                  label: 'Save',
-                  onPressed: _busy ? null : _submit,
-                  busy: _busy,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              GradientButton(
+                label: 'Save',
+                onPressed: _busy ? null : _submit,
+                busy: _busy,
+              ),
+            ],
           ),
         ),
       ),

@@ -224,11 +224,11 @@ class _ResultUploadSheetState extends State<ResultUploadSheet> {
                 ),
                 const SizedBox(height: 8),
                 if (_loadingSubjects)
-                  const Padding(
-                    padding: EdgeInsets.all(12),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
                     child: LinearProgressIndicator(
-                        color: AppColors.accentA,
-                        backgroundColor: Colors.white12),
+                        color: AppColors.primary,
+                        backgroundColor: AppColors.bg2),
                   )
                 else
                   Column(
