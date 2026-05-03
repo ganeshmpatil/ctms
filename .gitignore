@@ -1,32 +1,52 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# --------- Flutter ---------
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.packages
+flutter_app/build/
+
+# Android build cache & machine-specific
+flutter_app/android/.gradle/
+flutter_app/android/build/
+flutter_app/android/app/build/
+flutter_app/android/local.properties
+flutter_app/android/captures/
+
+# Other Flutter platforms (we only ship Android for now)
+flutter_app/ios/
+flutter_app/macos/
+flutter_app/windows/
+flutter_app/linux/
+
+# --------- Go ---------
+api/api
+api/school-api
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Code coverage profiles and other test artifacts
 *.out
 coverage.*
 *.coverprofile
 profile.cov
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
 go.work
 go.work.sum
 
-# env file
-.env
+# --------- Signing material (NEVER commit) ---------
+*.jks
+*.keystore
+**/key.properties
 
-# Editor/IDE
-# .idea/
-# .vscode/
+# --------- Secrets / output ---------
+.env
+dist/
+*.apk
+
+# --------- Editors / OS / Tooling ---------
+.idea/
+.vscode/
+.claude/
+*.iml
+.DS_Store

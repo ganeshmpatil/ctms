@@ -1,0 +1,28 @@
+p, admin, /*, *
+
+p, teacher, /students, GET
+p, teacher, /students, POST
+p, teacher, /students/*, GET
+p, teacher, /divisions, GET
+p, teacher, /subjects, GET
+p, teacher, /results, GET
+p, teacher, /results, POST
+p, teacher, /attendance, GET
+p, teacher, /attendance, POST
+p, teacher, /schools, GET
+
+p, staff, /students, GET
+p, staff, /divisions, GET
+p, staff, /leads, GET
+p, staff, /leads, POST
+p, staff, /leads/*, PATCH
+p, staff, /schools, GET
+
+p, parent, /students, GET
+p, parent, /students/*, GET
+p, parent, /results, GET
+p, parent, /attendance, GET
+p, parent, /divisions, GET
+p, parent, /subjects, GET
+p, parent, /schools, GET
+p, parent, /parent-students, GET
