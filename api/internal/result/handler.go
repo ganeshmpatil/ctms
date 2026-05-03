@@ -17,6 +17,8 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	h := &Handler{db: db}
 	mux.HandleFunc("GET /results", h.list)
 	mux.HandleFunc("POST /results", h.create)
+	mux.HandleFunc("PATCH /results/{id}", h.update)
+	mux.HandleFunc("DELETE /results/{id}", h.delete)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -61,4 +63,68 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, res)
+}
+
+func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	var patch struct {
+		Year       *int     `json:"year"`
+		Month      *int     `json:"month"`
+		TotalMarks *float64 `json:"total_marks"`
+		Photo      *string  `json:"photo"`
+	}
+	if err := httpx.DecodeJSON(r, &patch); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+
+	updates := map[string]any{}
+	if patch.Year != nil {
+		updates["year"] = *patch.Year
+	}
+	if patch.Month != nil {
+		if *patch.Month < 1 || *patch.Month > 12 {
+			httpx.BadRequest(w, "month must be 1..12")
+			return
+		}
+		updates["month"] = *patch.Month
+	}
+	if patch.TotalMarks != nil {
+		updates["total_marks"] = *patch.TotalMarks
+	}
+	if patch.Photo != nil {
+		updates["photo"] = *patch.Photo
+	}
+
+	var res Result
+	tx := h.db.WithContext(r.Context())
+	if err := tx.First(&res, "id = ?", id).Error; err != nil {
+		if httpx.IsNotFound(err) {
+			httpx.NotFound(w)
+			return
+		}
+		httpx.ServerError(w, err)
+		return
+	}
+	if len(updates) > 0 {
+		if err := tx.Model(&res).Updates(updates).Error; err != nil {
+			httpx.ServerError(w, err)
+			return
+		}
+	}
+	httpx.WriteJSON(w, http.StatusOK, res)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	tx := h.db.WithContext(r.Context()).Delete(&Result{}, "id = ?", id)
+	if tx.Error != nil {
+		httpx.ServerError(w, tx.Error)
+		return
+	}
+	if tx.RowsAffected == 0 {
+		httpx.NotFound(w)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

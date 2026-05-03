@@ -9,6 +9,8 @@ p, teacher, /divisions, GET
 p, teacher, /subjects, GET
 p, teacher, /results, GET
 p, teacher, /results, POST
+p, teacher, /results/*, PATCH
+p, teacher, /results/*, DELETE
 p, teacher, /attendance, GET
 p, teacher, /attendance, POST
 p, teacher, /schools, GET

@@ -14,6 +14,8 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	h := &Handler{db: db}
 	mux.HandleFunc("GET /divisions", h.list)
 	mux.HandleFunc("POST /divisions", h.create)
+	mux.HandleFunc("DELETE /divisions/{id}", h.delete)
+	mux.HandleFunc("POST /divisions/{id}/reset", h.reset)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -44,4 +46,84 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, d)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	tx := h.db.WithContext(r.Context()).Delete(&Division{}, "id = ?", id)
+	if tx.Error != nil {
+		httpx.ServerError(w, tx.Error)
+		return
+	}
+	if tx.RowsAffected == 0 {
+		httpx.NotFound(w)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// reset performs a year-end reset on a division:
+//   - DELETE all attendance and results for students currently linked to this division
+//   - SET division_id = NULL on those students (students themselves are preserved)
+//
+// Body must include {"confirm": true} or the request is refused.
+func (h *Handler) reset(w http.ResponseWriter, r *http.Request) {
+	divisionID := r.PathValue("id")
+
+	var body struct {
+		Confirm bool `json:"confirm"`
+	}
+	if err := httpx.DecodeJSON(r, &body); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+	if !body.Confirm {
+		httpx.BadRequest(w, "destructive operation; pass {\"confirm\": true}")
+		return
+	}
+
+	type counts struct {
+		Students   int64 `json:"students_unassigned"`
+		Attendance int64 `json:"attendance_deleted"`
+		Results    int64 `json:"results_deleted"`
+	}
+	var c counts
+
+	err := h.db.WithContext(r.Context()).Transaction(func(tx *gorm.DB) error {
+		// Snapshot the student IDs in this division.
+		var sids []string
+		if err := tx.Table("students").
+			Where("division_id = ?", divisionID).
+			Pluck("id", &sids).Error; err != nil {
+			return err
+		}
+		if len(sids) == 0 {
+			return nil
+		}
+
+		att := tx.Exec("DELETE FROM attendance WHERE student_id IN ?", sids)
+		if att.Error != nil {
+			return att.Error
+		}
+		c.Attendance = att.RowsAffected
+
+		// Delete results (cascade to result_subjects via FK)
+		res := tx.Exec("DELETE FROM results WHERE student_id IN ?", sids)
+		if res.Error != nil {
+			return res.Error
+		}
+		c.Results = res.RowsAffected
+
+		stu := tx.Exec("UPDATE students SET division_id = NULL WHERE division_id = ?", divisionID)
+		if stu.Error != nil {
+			return stu.Error
+		}
+		c.Students = stu.RowsAffected
+		return nil
+	})
+	if err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, c)
 }

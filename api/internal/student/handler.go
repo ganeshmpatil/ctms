@@ -2,6 +2,7 @@ package student
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -22,6 +23,8 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	mux.HandleFunc("DELETE /students/{id}", h.delete)
 }
 
+// list returns all students. For parents, only their linked children.
+// `division_id=` filters by division. `division_id=null` returns unassigned students.
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	out := make([]Student, 0)
 	q := h.db.WithContext(r.Context()).Order("created_at DESC")
@@ -39,7 +42,11 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		}
 		q = q.Where("id IN ?", ids)
 	} else if div := r.URL.Query().Get("division_id"); div != "" {
-		q = q.Where("division_id = ?", div)
+		if div == "null" {
+			q = q.Where("division_id IS NULL")
+		} else {
+			q = q.Where("division_id = ?", div)
+		}
 	}
 
 	if err := q.Find(&out).Error; err != nil {
@@ -80,13 +87,27 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
-	var s Student
-	if err := httpx.DecodeJSON(r, &s); err != nil {
+	req, err := decodeRequest(r)
+	if err != nil {
 		httpx.BadRequest(w, err.Error())
 		return
 	}
-	if s.Name == "" || s.DivisionID == uuid.Nil {
+	if req.Name == nil || *req.Name == "" || req.DivisionID == nil {
 		httpx.BadRequest(w, "name and division_id required")
+		return
+	}
+	s := Student{
+		Name:          *req.Name,
+		Address:       req.Address,
+		GuardianPhone: req.GuardianPhone,
+		Photo:         req.Photo,
+		Gender:        req.Gender,
+		DOB:           req.DOB,
+	}
+	if did, err := uuid.Parse(*req.DivisionID); err == nil {
+		s.DivisionID = &did
+	} else {
+		httpx.BadRequest(w, "invalid division_id")
 		return
 	}
 	if err := h.db.WithContext(r.Context()).Create(&s).Error; err != nil {
@@ -98,47 +119,38 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	var patch struct {
-		Name          *string `json:"name"`
-		Address       *string `json:"address"`
-		DivisionID    *string `json:"division_id"`
-		GuardianPhone *string `json:"guardian_phone"`
-		PhotoURL      *string `json:"photo_url"`
-		SchoolID      *string `json:"school_id"`
-	}
-	if err := httpx.DecodeJSON(r, &patch); err != nil {
+	req, err := decodeRequest(r)
+	if err != nil {
 		httpx.BadRequest(w, err.Error())
 		return
 	}
 
 	updates := map[string]any{}
-	if patch.Name != nil {
-		updates["name"] = *patch.Name
+	if req.Name != nil {
+		updates["name"] = *req.Name
 	}
-	if patch.Address != nil {
-		updates["address"] = *patch.Address
+	if req.Address != nil {
+		updates["address"] = *req.Address
 	}
-	if patch.DivisionID != nil {
-		div, err := uuid.Parse(*patch.DivisionID)
+	if req.DivisionID != nil {
+		div, err := uuid.Parse(*req.DivisionID)
 		if err != nil {
 			httpx.BadRequest(w, "invalid division_id")
 			return
 		}
 		updates["division_id"] = div
 	}
-	if patch.GuardianPhone != nil {
-		updates["guardian_phone"] = *patch.GuardianPhone
+	if req.GuardianPhone != nil {
+		updates["guardian_phone"] = *req.GuardianPhone
 	}
-	if patch.PhotoURL != nil {
-		updates["photo_url"] = *patch.PhotoURL
+	if req.Photo != nil {
+		updates["photo"] = *req.Photo
 	}
-	if patch.SchoolID != nil {
-		sid, err := uuid.Parse(*patch.SchoolID)
-		if err != nil {
-			httpx.BadRequest(w, "invalid school_id")
-			return
-		}
-		updates["school_id"] = sid
+	if req.Gender != nil {
+		updates["gender"] = *req.Gender
+	}
+	if req.DOB != nil {
+		updates["dob"] = *req.DOB
 	}
 
 	var s Student
@@ -172,4 +184,41 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// studentRequest captures both create and update payloads. All fields optional;
+// caller validates which are required.
+type studentRequest struct {
+	Name          *string    `json:"name"`
+	Address       *string    `json:"address"`
+	DivisionID    *string    `json:"division_id"`
+	GuardianPhone *string    `json:"guardian_phone"`
+	Photo         *string    `json:"photo"`
+	SchoolID      *string    `json:"school_id"`
+	Gender        *string    `json:"gender"`
+	DOB           *time.Time `json:"-"`
+	DOBStr        *string    `json:"dob"`
+}
+
+func decodeRequest(r *http.Request) (*studentRequest, error) {
+	var req studentRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		return nil, err
+	}
+	if req.DOBStr != nil && *req.DOBStr != "" {
+		t, err := parseDate(*req.DOBStr)
+		if err != nil {
+			return nil, err
+		}
+		req.DOB = &t
+	}
+	return &req, nil
+}
+
+// parseDate accepts YYYY-MM-DD or full RFC3339 (matches attendance handler).
+func parseDate(s string) (time.Time, error) {
+	if t, err := time.Parse("2006-01-02", s); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.RFC3339, s)
 }

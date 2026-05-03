@@ -12,6 +12,7 @@ type Result struct {
 	Year       int             `gorm:"not null"                                       json:"year"`
 	Month      int             `gorm:"not null"                                       json:"month"`
 	TotalMarks *float64        `gorm:"column:total_marks"                             json:"total_marks,omitempty"`
+	Photo      *string         `gorm:"column:photo"                                   json:"photo,omitempty"`
 	CreatedAt  time.Time       `                                                      json:"created_at"`
 	Subjects   []ResultSubject `gorm:"foreignKey:ResultID;constraint:OnDelete:CASCADE" json:"subjects"`
 }
