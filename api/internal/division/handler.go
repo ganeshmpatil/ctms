@@ -14,6 +14,7 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	h := &Handler{db: db}
 	mux.HandleFunc("GET /divisions", h.list)
 	mux.HandleFunc("POST /divisions", h.create)
+	mux.HandleFunc("PATCH /divisions/{id}", h.update)
 	mux.HandleFunc("DELETE /divisions/{id}", h.delete)
 	mux.HandleFunc("POST /divisions/{id}/reset", h.reset)
 }
@@ -48,8 +49,70 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusCreated, d)
 }
 
+func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	var patch struct {
+		Standard *int    `json:"standard"`
+		Medium   *string `json:"medium"`
+	}
+	if err := httpx.DecodeJSON(r, &patch); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+
+	updates := map[string]any{}
+	if patch.Standard != nil {
+		if *patch.Standard < 1 || *patch.Standard > 12 {
+			httpx.BadRequest(w, "standard must be 1..12")
+			return
+		}
+		updates["standard"] = *patch.Standard
+	}
+	if patch.Medium != nil {
+		if *patch.Medium != "english" && *patch.Medium != "marathi" {
+			httpx.BadRequest(w, "medium must be 'english' or 'marathi'")
+			return
+		}
+		updates["medium"] = *patch.Medium
+	}
+
+	var d Division
+	tx := h.db.WithContext(r.Context())
+	if err := tx.First(&d, "id = ?", id).Error; err != nil {
+		if httpx.IsNotFound(err) {
+			httpx.NotFound(w)
+			return
+		}
+		httpx.ServerError(w, err)
+		return
+	}
+	if len(updates) > 0 {
+		if err := tx.Model(&d).Updates(updates).Error; err != nil {
+			httpx.ServerError(w, err)
+			return
+		}
+	}
+	httpx.WriteJSON(w, http.StatusOK, d)
+}
+
+// delete refuses if any students are linked to this division.
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	var count int64
+	if err := h.db.WithContext(r.Context()).
+		Table("students").
+		Where("division_id = ?", id).
+		Count(&count).Error; err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	if count > 0 {
+		httpx.WriteJSON(w, http.StatusConflict, map[string]any{
+			"error":    "division has students; reassign or run year-end reset first",
+			"students": count,
+		})
+		return
+	}
 	tx := h.db.WithContext(r.Context()).Delete(&Division{}, "id = ?", id)
 	if tx.Error != nil {
 		httpx.ServerError(w, tx.Error)

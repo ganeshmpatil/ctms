@@ -23,8 +23,6 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	mux.HandleFunc("DELETE /students/{id}", h.delete)
 }
 
-// list returns all students. For parents, only their linked children.
-// `division_id=` filters by division. `division_id=null` returns unassigned students.
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	out := make([]Student, 0)
 	q := h.db.WithContext(r.Context()).Order("created_at DESC")
@@ -97,12 +95,17 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s := Student{
-		Name:          *req.Name,
-		Address:       req.Address,
-		GuardianPhone: req.GuardianPhone,
-		Photo:         req.Photo,
-		Gender:        req.Gender,
-		DOB:           req.DOB,
+		Name:       *req.Name,
+		Address:    req.Address,
+		Mobile1:    req.Mobile1,
+		Mobile2:    req.Mobile2,
+		Mobile3:    req.Mobile3,
+		Photo:      req.Photo,
+		Gender:     req.Gender,
+		DOB:        req.DOB,
+		Aadhar:     req.Aadhar,
+		SchoolName: req.SchoolName,
+		Reference:  req.Reference,
 	}
 	if did, err := uuid.Parse(*req.DivisionID); err == nil {
 		s.DivisionID = &did
@@ -126,12 +129,22 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updates := map[string]any{}
-	if req.Name != nil {
-		updates["name"] = *req.Name
+	setIfNotNil := func(col string, v *string) {
+		if v != nil {
+			updates[col] = *v
+		}
 	}
-	if req.Address != nil {
-		updates["address"] = *req.Address
-	}
+	setIfNotNil("name", req.Name)
+	setIfNotNil("address", req.Address)
+	setIfNotNil("mobile_1", req.Mobile1)
+	setIfNotNil("mobile_2", req.Mobile2)
+	setIfNotNil("mobile_3", req.Mobile3)
+	setIfNotNil("photo", req.Photo)
+	setIfNotNil("gender", req.Gender)
+	setIfNotNil("aadhar", req.Aadhar)
+	setIfNotNil("school_name", req.SchoolName)
+	setIfNotNil("reference", req.Reference)
+
 	if req.DivisionID != nil {
 		div, err := uuid.Parse(*req.DivisionID)
 		if err != nil {
@@ -139,15 +152,6 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		updates["division_id"] = div
-	}
-	if req.GuardianPhone != nil {
-		updates["guardian_phone"] = *req.GuardianPhone
-	}
-	if req.Photo != nil {
-		updates["photo"] = *req.Photo
-	}
-	if req.Gender != nil {
-		updates["gender"] = *req.Gender
 	}
 	if req.DOB != nil {
 		updates["dob"] = *req.DOB
@@ -186,18 +190,21 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// studentRequest captures both create and update payloads. All fields optional;
-// caller validates which are required.
 type studentRequest struct {
-	Name          *string    `json:"name"`
-	Address       *string    `json:"address"`
-	DivisionID    *string    `json:"division_id"`
-	GuardianPhone *string    `json:"guardian_phone"`
-	Photo         *string    `json:"photo"`
-	SchoolID      *string    `json:"school_id"`
-	Gender        *string    `json:"gender"`
-	DOB           *time.Time `json:"-"`
-	DOBStr        *string    `json:"dob"`
+	Name       *string    `json:"name"`
+	Address    *string    `json:"address"`
+	DivisionID *string    `json:"division_id"`
+	Mobile1    *string    `json:"mobile_1"`
+	Mobile2    *string    `json:"mobile_2"`
+	Mobile3    *string    `json:"mobile_3"`
+	Photo      *string    `json:"photo"`
+	SchoolID   *string    `json:"school_id"`
+	SchoolName *string    `json:"school_name"`
+	Gender     *string    `json:"gender"`
+	Aadhar     *string    `json:"aadhar"`
+	Reference  *string    `json:"reference"`
+	DOB        *time.Time `json:"-"`
+	DOBStr     *string    `json:"dob"`
 }
 
 func decodeRequest(r *http.Request) (*studentRequest, error) {
@@ -215,7 +222,6 @@ func decodeRequest(r *http.Request) (*studentRequest, error) {
 	return &req, nil
 }
 
-// parseDate accepts YYYY-MM-DD or full RFC3339 (matches attendance handler).
 func parseDate(s string) (time.Time, error) {
 	if t, err := time.Parse("2006-01-02", s); err == nil {
 		return t, nil
