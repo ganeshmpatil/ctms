@@ -2,6 +2,7 @@ package attendance
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -50,20 +51,43 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
-	var a Attendance
-	if err := httpx.DecodeJSON(r, &a); err != nil {
+	var req struct {
+		StudentID    string  `json:"student_id"`
+		Date         string  `json:"date"`
+		IsPresent    bool    `json:"is_present"`
+		IsAbsent     bool    `json:"is_absent"`
+		AbsentReason *string `json:"absent_reason"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.BadRequest(w, err.Error())
 		return
 	}
-	if a.StudentID == uuid.Nil || a.Date.IsZero() {
-		httpx.BadRequest(w, "student_id and date required")
+
+	studentID, err := uuid.Parse(req.StudentID)
+	if err != nil {
+		httpx.BadRequest(w, "invalid student_id")
 		return
 	}
-	if a.IsPresent == a.IsAbsent {
+
+	date, err := parseDate(req.Date)
+	if err != nil {
+		httpx.BadRequest(w, "date must be YYYY-MM-DD or RFC3339; got: "+req.Date)
+		return
+	}
+
+	if req.IsPresent == req.IsAbsent {
 		httpx.BadRequest(w, "exactly one of is_present / is_absent must be true")
 		return
 	}
-	err := h.db.WithContext(r.Context()).Clauses(clause.OnConflict{
+
+	a := Attendance{
+		StudentID:    studentID,
+		Date:         date,
+		IsPresent:    req.IsPresent,
+		IsAbsent:     req.IsAbsent,
+		AbsentReason: req.AbsentReason,
+	}
+	err = h.db.WithContext(r.Context()).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "student_id"}, {Name: "date"}},
 		DoUpdates: clause.AssignmentColumns([]string{"is_present", "is_absent", "absent_reason"}),
 	}).Create(&a).Error
@@ -72,4 +96,12 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, a)
+}
+
+// parseDate accepts either bare YYYY-MM-DD or full RFC3339, returns UTC midnight.
+func parseDate(s string) (time.Time, error) {
+	if t, err := time.Parse("2006-01-02", s); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.RFC3339, s)
 }
