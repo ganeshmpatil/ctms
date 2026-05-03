@@ -168,93 +168,94 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     final canMutate =
         widget.api.user?.role == 'admin' || widget.api.user?.role == 'teacher';
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: GradientBackground(
-        child: NestedScrollView(
-          headerSliverBuilder: (ctx, _) => [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 240,
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              actions: canMutate
-                  ? [
-                      IconButton(
-                        icon: const Icon(Icons.edit_rounded),
-                        tooltip: 'Edit',
-                        onPressed: _openEdit,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded),
-                        tooltip: 'Delete',
-                        onPressed: _confirmDelete,
-                      ),
-                    ]
-                  : null,
-              flexibleSpace: FlexibleSpaceBar(
-                background: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [AppColors.primary, AppColors.accent],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.4),
-                                blurRadius: 22,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: PhotoAvatar(
-                            base64: s.photo,
-                            fallbackInitials: s.initials,
-                            radius: 42,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(s.name,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 4),
-                        Text(_divisionLabel,
-                            style:
-                                const TextStyle(color: AppColors.muted)),
-                      ],
+      backgroundColor: AppColors.bg1,
+      appBar: AppBar(
+        title: const Text('Student'),
+        actions: canMutate
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  tooltip: 'Edit',
+                  onPressed: _openEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  tooltip: 'Delete',
+                  onPressed: _confirmDelete,
+                ),
+              ]
+            : null,
+      ),
+      body: Column(
+        children: [
+          // Non-collapsing header — sits above the TabBar so nothing overlaps.
+          Container(
+            width: double.infinity,
+            color: AppColors.surface,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent],
                     ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 18,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: PhotoAvatar(
+                    base64: s.photo,
+                    fallbackInitials: s.initials,
+                    radius: 40,
                   ),
                 ),
-              ),
-              bottom: TabBar(
-                controller: _tab,
-                indicatorColor: AppColors.accentA,
-                indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: AppColors.muted,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-                tabs: const [
-                  Tab(text: 'Info'),
-                  Tab(text: 'Attendance'),
-                  Tab(text: 'Results'),
-                ],
-              ),
+                const SizedBox(height: 12),
+                Text(
+                  s.name,
+                  style: const TextStyle(
+                    color: AppColors.text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _divisionLabel,
+                  style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+              ],
             ),
-          ],
-          body: TabBarView(
-            controller: _tab,
-            children: [
-              _InfoTab(student: s, divisionLabel: _divisionLabel),
-              AttendanceCalendarView(api: widget.api, student: _student),
+          ),
+          Container(
+            color: AppColors.surface,
+            child: TabBar(
+              controller: _tab,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 3,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.muted,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+              tabs: const [
+                Tab(text: 'Info'),
+                Tab(text: 'Attendance'),
+                Tab(text: 'Results'),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.outline),
+          Expanded(
+            child: TabBarView(
+              controller: _tab,
+              children: [
+                _InfoTab(student: s, divisionLabel: _divisionLabel),
+                AttendanceCalendarView(api: widget.api, student: _student),
               FutureBuilder<List<ExamResult>>(
                 future: _results,
                 builder: (ctx, snap) {
@@ -393,6 +394,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
             ],
           ),
         ),
+        ],
       ),
     );
   }
