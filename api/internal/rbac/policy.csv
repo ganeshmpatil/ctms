@@ -3,6 +3,8 @@ p, admin, /*, *
 p, teacher, /students, GET
 p, teacher, /students, POST
 p, teacher, /students/*, GET
+p, teacher, /students/*, PATCH
+p, teacher, /students/*, DELETE
 p, teacher, /divisions, GET
 p, teacher, /subjects, GET
 p, teacher, /results, GET

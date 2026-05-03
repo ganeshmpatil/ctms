@@ -18,6 +18,8 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	mux.HandleFunc("GET /students", h.list)
 	mux.HandleFunc("POST /students", h.create)
 	mux.HandleFunc("GET /students/{id}", h.get)
+	mux.HandleFunc("PATCH /students/{id}", h.update)
+	mux.HandleFunc("DELETE /students/{id}", h.delete)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -92,4 +94,82 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, s)
+}
+
+func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	var patch struct {
+		Name          *string `json:"name"`
+		Address       *string `json:"address"`
+		DivisionID    *string `json:"division_id"`
+		GuardianPhone *string `json:"guardian_phone"`
+		PhotoURL      *string `json:"photo_url"`
+		SchoolID      *string `json:"school_id"`
+	}
+	if err := httpx.DecodeJSON(r, &patch); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+
+	updates := map[string]any{}
+	if patch.Name != nil {
+		updates["name"] = *patch.Name
+	}
+	if patch.Address != nil {
+		updates["address"] = *patch.Address
+	}
+	if patch.DivisionID != nil {
+		div, err := uuid.Parse(*patch.DivisionID)
+		if err != nil {
+			httpx.BadRequest(w, "invalid division_id")
+			return
+		}
+		updates["division_id"] = div
+	}
+	if patch.GuardianPhone != nil {
+		updates["guardian_phone"] = *patch.GuardianPhone
+	}
+	if patch.PhotoURL != nil {
+		updates["photo_url"] = *patch.PhotoURL
+	}
+	if patch.SchoolID != nil {
+		sid, err := uuid.Parse(*patch.SchoolID)
+		if err != nil {
+			httpx.BadRequest(w, "invalid school_id")
+			return
+		}
+		updates["school_id"] = sid
+	}
+
+	var s Student
+	tx := h.db.WithContext(r.Context())
+	if err := tx.First(&s, "id = ?", id).Error; err != nil {
+		if httpx.IsNotFound(err) {
+			httpx.NotFound(w)
+			return
+		}
+		httpx.ServerError(w, err)
+		return
+	}
+	if len(updates) > 0 {
+		if err := tx.Model(&s).Updates(updates).Error; err != nil {
+			httpx.ServerError(w, err)
+			return
+		}
+	}
+	httpx.WriteJSON(w, http.StatusOK, s)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	res := h.db.WithContext(r.Context()).Delete(&Student{}, "id = ?", id)
+	if res.Error != nil {
+		httpx.ServerError(w, res.Error)
+		return
+	}
+	if res.RowsAffected == 0 {
+		httpx.NotFound(w)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
