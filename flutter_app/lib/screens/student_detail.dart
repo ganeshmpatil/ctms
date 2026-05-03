@@ -26,7 +26,6 @@ class StudentDetailScreen extends StatefulWidget {
 class _StudentDetailScreenState extends State<StudentDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
-  late Future<List<Attendance>> _attendance;
   late Student _student;
   late String _divisionLabel;
 
@@ -36,7 +35,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     _tab = TabController(length: 3, vsync: this);
     _student = widget.student;
     _divisionLabel = widget.divisionLabel;
-    _attendance = widget.api.attendance(studentId: widget.student.id);
     _results = widget.api.results(studentId: widget.student.id);
   }
 

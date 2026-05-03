@@ -9,8 +9,8 @@ import '../widgets/glass.dart';
 class DashboardScreen extends StatefulWidget {
   final ApiClient api;
   final VoidCallback onOpenStudents;
-  final VoidCallback onOpenRollCall;
-  final VoidCallback onOpenLeads;
+  final VoidCallback? onOpenRollCall;
+  final VoidCallback? onOpenLeads;
   final VoidCallback onOpenSubjects;
 
   const DashboardScreen({
@@ -118,81 +118,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
               final d = snap.data!;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.18,
-                    children: [
-                      _ActionCard(
-                        icon: Icons.groups_rounded,
-                        label: 'Students',
-                        count: '${d.students.length}',
-                        accent: AppColors.primary,
-                        bg: AppColors.primaryLight,
-                        onTap: widget.onOpenStudents,
-                      ),
-                      _ActionCard(
-                        icon: Icons.fact_check_rounded,
-                        label: 'Roll Call',
-                        count: 'Today',
-                        accent: AppColors.success,
-                        bg: AppColors.successLight,
-                        onTap: widget.onOpenRollCall,
-                      ),
-                      _ActionCard(
-                        icon: Icons.menu_book_rounded,
-                        label: 'Subjects',
-                        count: '${d.subjects.length}',
-                        accent: AppColors.accent,
-                        bg: AppColors.accentLight,
-                        onTap: widget.onOpenSubjects,
-                      ),
-                      _ActionCard(
-                        icon: Icons.support_agent_rounded,
-                        label: 'Leads',
-                        count: '${d.leads.where((l) => !l.isResolved).length}',
-                        accent: AppColors.warning,
-                        bg: AppColors.warningLight,
-                        onTap: widget.onOpenLeads,
-                      ),
-                    ],
+              final cards = <_ActionCard>[
+                _ActionCard(
+                  icon: Icons.groups_rounded,
+                  label: 'Students',
+                  count: '${d.students.length}',
+                  accent: AppColors.primary,
+                  bg: AppColors.primaryLight,
+                  onTap: widget.onOpenStudents,
+                ),
+                if (widget.onOpenRollCall != null)
+                  _ActionCard(
+                    icon: Icons.fact_check_rounded,
+                    label: 'Roll Call',
+                    count: 'Today',
+                    accent: AppColors.success,
+                    bg: AppColors.successLight,
+                    onTap: widget.onOpenRollCall!,
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      const Text('Standards',
-                          style: TextStyle(
-                              color: AppColors.text,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700)),
-                      const Spacer(),
-                      Text('${d.divisions.length} total',
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 12)),
-                    ],
+                if (widget.onOpenLeads != null)
+                  _ActionCard(
+                    icon: Icons.support_agent_rounded,
+                    label: 'Leads',
+                    count: '${d.leads.where((l) => !l.isResolved).length}',
+                    accent: AppColors.warning,
+                    bg: AppColors.warningLight,
+                    onTap: widget.onOpenLeads!,
                   ),
-                  const SizedBox(height: 10),
-                  GlassCard(
-                    padding: const EdgeInsets.all(12),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: d.divisions
-                          .map((div) => _StandardPill(
-                                label: div.label,
-                                onTap: widget.onOpenStudents,
-                                isEnglish: div.medium == 'english',
-                              ))
-                          .toList(),
-                    ),
-                  ),
-                ],
+              ];
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.45,
+                children: cards,
               );
             },
           ),
@@ -236,68 +197,42 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: accent, size: 22),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(count,
-                  style: const TextStyle(
-                      color: AppColors.text,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800)),
-              const SizedBox(height: 2),
-              Text(label,
-                  style: const TextStyle(
-                      color: AppColors.muted, fontSize: 13)),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: accent, size: 20),
+              ),
+              const Spacer(),
+              Icon(Icons.arrow_forward_rounded,
+                  color: AppColors.muted, size: 18),
             ],
           ),
+          const SizedBox(height: 10),
+          Text(count,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: AppColors.text,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: const TextStyle(
+                  color: AppColors.muted, fontSize: 12)),
         ],
       ),
     );
   }
 }
 
-class _StandardPill extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool isEnglish;
-  const _StandardPill({
-    required this.label,
-    required this.onTap,
-    required this.isEnglish,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TapScale(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isEnglish ? AppColors.primaryLight : AppColors.warningLight,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isEnglish ? AppColors.primary : AppColors.warning,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}

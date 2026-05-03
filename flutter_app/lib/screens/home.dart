@@ -47,7 +47,10 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = widget.api.user?.role == 'admin';
+    final role = widget.api.user?.role;
+    final isAdmin = role == 'admin';
+    final isTeacher = role == 'teacher';
+    final isStaff = role == 'staff';
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.bg1,
@@ -65,14 +68,18 @@ class _HomeShellState extends State<HomeShell> {
         theme: widget.theme,
         onDashboard: () => Navigator.of(context).pop(),
         onStudents: () => _go(() => StudentsScreen(api: widget.api)),
-        onRollCall: () => _go(() => RollCallScreen(api: widget.api)),
+        onRollCall: (isAdmin || isTeacher)
+            ? () => _go(() => RollCallScreen(api: widget.api))
+            : null,
         onDivisions: isAdmin
             ? () => _go(() => AdminDivisionsScreen(api: widget.api))
             : null,
         onSubjects: isAdmin
             ? () => _go(() => AdminSubjectsScreen(api: widget.api))
             : null,
-        onLeads: () => _go(() => AdminLeadsScreen(api: widget.api)),
+        onLeads: (isAdmin || isStaff)
+            ? () => _go(() => AdminLeadsScreen(api: widget.api))
+            : null,
         onProfile: () => _go(() => ProfileScreen(api: widget.api)),
         onSettings: () =>
             _go(() => SettingsScreen(api: widget.api, theme: widget.theme)),
@@ -83,13 +90,18 @@ class _HomeShellState extends State<HomeShell> {
         onOpenStudents: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => StudentsScreen(api: widget.api)),
         ),
-        onOpenRollCall: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => RollCallScreen(api: widget.api)),
-        ),
-        onOpenLeads: () => Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (_) => AdminLeadsScreen(api: widget.api)),
-        ),
+        onOpenRollCall: (isAdmin || isTeacher)
+            ? () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => RollCallScreen(api: widget.api)),
+                )
+            : null,
+        onOpenLeads: (isAdmin || isStaff)
+            ? () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => AdminLeadsScreen(api: widget.api)),
+                )
+            : null,
         onOpenSubjects: () => Navigator.of(context).push(
           MaterialPageRoute(
               builder: (_) => AdminSubjectsScreen(api: widget.api)),
@@ -104,10 +116,10 @@ class _AppDrawer extends StatelessWidget {
   final ThemeController theme;
   final VoidCallback onDashboard;
   final VoidCallback onStudents;
-  final VoidCallback onRollCall;
+  final VoidCallback? onRollCall;
   final VoidCallback? onDivisions;
   final VoidCallback? onSubjects;
-  final VoidCallback onLeads;
+  final VoidCallback? onLeads;
   final VoidCallback onProfile;
   final VoidCallback onSettings;
   final VoidCallback onLogout;
@@ -203,11 +215,12 @@ class _AppDrawer extends StatelessWidget {
                     label: 'Students',
                     onTap: onStudents,
                   ),
-                  _DrawerItem(
-                    icon: Icons.fact_check_rounded,
-                    label: 'Roll Call',
-                    onTap: onRollCall,
-                  ),
+                  if (onRollCall != null)
+                    _DrawerItem(
+                      icon: Icons.fact_check_rounded,
+                      label: 'Roll Call',
+                      onTap: onRollCall!,
+                    ),
                   if (onDivisions != null)
                     _DrawerItem(
                       icon: Icons.class_rounded,
@@ -222,11 +235,12 @@ class _AppDrawer extends StatelessWidget {
                       badge: 'ADMIN',
                       onTap: onSubjects!,
                     ),
-                  _DrawerItem(
-                    icon: Icons.support_agent_rounded,
-                    label: 'Leads',
-                    onTap: onLeads,
-                  ),
+                  if (onLeads != null)
+                    _DrawerItem(
+                      icon: Icons.support_agent_rounded,
+                      label: 'Leads',
+                      onTap: onLeads!,
+                    ),
                   const Divider(height: 24, color: AppColors.outline),
                   _DrawerItem(
                     icon: Icons.person_rounded,
