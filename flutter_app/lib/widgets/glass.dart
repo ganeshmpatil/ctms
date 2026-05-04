@@ -10,6 +10,7 @@ class AppPalette {
   final Color accentLight;
   final Color accentC; // pink/secondary accent for gradients
   final Color accentD; // tertiary accent for gradients
+  final Color pageBg; // subtle theme-tinted page background
 
   const AppPalette({
     required this.name,
@@ -20,6 +21,7 @@ class AppPalette {
     required this.accentLight,
     required this.accentC,
     required this.accentD,
+    required this.pageBg,
   });
 }
 
@@ -33,6 +35,7 @@ const palettes = <AppPalette>[
     accentLight: Color(0xFFDBEAFE),
     accentC: Color(0xFFEC4899),
     accentD: Color(0xFF06B6D4),
+    pageBg: Color(0xFFF6F4FE),
   ),
   AppPalette(
     name: 'Ocean',
@@ -43,6 +46,7 @@ const palettes = <AppPalette>[
     accentLight: Color(0xFFCFFAFE),
     accentC: Color(0xFF8B5CF6),
     accentD: Color(0xFF14B8A6),
+    pageBg: Color(0xFFF1F6FF),
   ),
   AppPalette(
     name: 'Forest',
@@ -53,6 +57,7 @@ const palettes = <AppPalette>[
     accentLight: Color(0xFFCCFBF1),
     accentC: Color(0xFFF59E0B),
     accentD: Color(0xFF06B6D4),
+    pageBg: Color(0xFFF1FAF5),
   ),
   AppPalette(
     name: 'Coral',
@@ -63,6 +68,7 @@ const palettes = <AppPalette>[
     accentLight: Color(0xFFFEF3C7),
     accentC: Color(0xFFEC4899),
     accentD: Color(0xFFEF4444),
+    pageBg: Color(0xFFFEF6F4),
   ),
   AppPalette(
     name: 'Indigo',
@@ -73,8 +79,18 @@ const palettes = <AppPalette>[
     accentLight: Color(0xFFCFFAFE),
     accentC: Color(0xFF8B5CF6),
     accentD: Color(0xFFEC4899),
+    pageBg: Color(0xFFF3F4FF),
   ),
 ];
+
+/// Brand colors used for the app-wide header and footer.
+/// From colorhunt.co/palettes/nature — sage green family.
+class NatureColors {
+  static const dark = Color(0xFF344E41);   // forest
+  static const medium = Color(0xFF588157); // green
+  static const light = Color(0xFFA3B18A);  // sage
+  static const cream = Color(0xFFDAD7CD);  // cream
+}
 
 /// Singleton holder for the active palette. Mutated by ThemeController.
 class _PaletteHolder {
@@ -101,6 +117,7 @@ class AppColors {
   static Color get accentB => _palette.current.accent;
   static Color get accentC => _palette.current.accentC;
   static Color get accentD => _palette.current.accentD;
+  static Color get pageBg => _palette.current.pageBg;
 
   // Surface
   static const bg1 = Color(0xFFF8FAFC);
@@ -126,14 +143,14 @@ class AppColors {
   static const glassStroke = outline;
 }
 
-/// Page background — solid light grey.
+/// Page background — subtle theme-tinted color.
 class GradientBackground extends StatelessWidget {
   final Widget child;
   const GradientBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return Container(color: AppColors.bg1, child: child);
+    return Container(color: AppColors.pageBg, child: child);
   }
 }
 

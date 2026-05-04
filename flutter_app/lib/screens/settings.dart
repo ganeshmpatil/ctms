@@ -53,28 +53,12 @@ class SettingsScreen extends StatelessWidget {
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             GlassCard(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.person_rounded,
-                        color: AppColors.muted),
-                    title: const Text('Signed in as'),
-                    subtitle: Text(api.user?.email ?? '—',
-                        style: const TextStyle(color: AppColors.muted)),
-                  ),
-                  const Divider(
-                      height: 1,
-                      color: AppColors.outline,
-                      indent: 16,
-                      endIndent: 16),
-                  ListTile(
-                    leading: const Icon(Icons.cloud_rounded,
-                        color: AppColors.muted),
-                    title: const Text('API endpoint'),
-                    subtitle: Text(api.apiBase,
-                        style: const TextStyle(color: AppColors.muted)),
-                  ),
-                ],
+              child: ListTile(
+                leading: const Icon(Icons.person_rounded,
+                    color: AppColors.muted),
+                title: const Text('Signed in as'),
+                subtitle: Text(api.user?.email ?? '—',
+                    style: const TextStyle(color: AppColors.muted)),
               ),
             ),
           ],

@@ -162,7 +162,7 @@ class _RollCallScreenState extends State<RollCallScreen> {
                             children: [
                               Text('Roll Call',
                                   style: TextStyle(
-                                      color: Colors.white,
+                                      color: AppColors.text,
                                       fontSize: 24,
                                       fontWeight: FontWeight.w800)),
                             ],
@@ -178,10 +178,10 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: _divisionId,
-                                      dropdownColor: AppColors.bg2,
-                                      iconEnabledColor: Colors.white70,
+                                      dropdownColor: AppColors.surface,
+                                      iconEnabledColor: AppColors.muted,
                                       style: const TextStyle(
-                                          color: Colors.white,
+                                          color: AppColors.text,
                                           fontWeight: FontWeight.w600),
                                       isExpanded: true,
                                       items: _divisions
@@ -209,12 +209,12 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                     child: Row(
                                       children: [
                                         const Icon(Icons.event_rounded,
-                                            color: Colors.white70, size: 18),
+                                            color: AppColors.muted, size: 18),
                                         const SizedBox(width: 6),
                                         Text(
                                           DateFormat('dd MMM').format(_date),
                                           style: const TextStyle(
-                                              color: Colors.white,
+                                              color: AppColors.text,
                                               fontWeight: FontWeight.w600,
                                               fontSize: 13),
                                         ),
@@ -254,7 +254,7 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                   child: Text(
                                     '$_presentCount present · ${_students.length - _presentCount} absent',
                                     style: const TextStyle(
-                                        color: Colors.white,
+                                        color: AppColors.text,
                                         fontWeight: FontWeight.w700),
                                   ),
                                 ),
@@ -316,7 +316,7 @@ class _RollCallScreenState extends State<RollCallScreen> {
                                               children: [
                                                 Text(s.name,
                                                     style: const TextStyle(
-                                                        color: Colors.white,
+                                                        color: AppColors.text,
                                                         fontSize: 14,
                                                         fontWeight:
                                                             FontWeight.w700)),

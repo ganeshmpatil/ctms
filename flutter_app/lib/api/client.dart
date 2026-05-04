@@ -354,6 +354,51 @@ class ApiClient {
     return ResetCounts.fromJson(j as Map<String, dynamic>);
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$_apiBase/me/password'),
+      headers: _headers,
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
+    if (res.statusCode == 401) {
+      throw ApiException(401, _errorMessage(res));
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+  }
+
+  Future<List<AuthUser>> listAuthUsers() async {
+    final list = await _get('/admin/users') as List;
+    return list
+        .map((j) => AuthUser.fromJson(j as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> adminResetPassword({
+    required String userId,
+    required String newPassword,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$_apiBase/admin/users/$userId/reset-password'),
+      headers: _headers,
+      body: jsonEncode({'new_password': newPassword}),
+    );
+    if (res.statusCode == 401) {
+      await logout();
+      throw ApiException(401, 'session expired');
+    }
+    if (res.statusCode >= 400) {
+      throw ApiException(res.statusCode, _errorMessage(res));
+    }
+  }
+
   Future<void> deleteStudent(String id) async {
     final res = await http.delete(
       Uri.parse('$_apiBase/students/$id'),

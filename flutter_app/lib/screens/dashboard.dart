@@ -118,6 +118,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 );
               }
               final d = snap.data!;
+              // Cards inherit colors from the active theme palette so they
+              // always contrast with the (lightly-tinted) page background.
               final cards = <_ActionCard>[
                 _ActionCard(
                   icon: Icons.groups_rounded,
@@ -132,8 +134,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     icon: Icons.fact_check_rounded,
                     label: 'Roll Call',
                     count: 'Today',
-                    accent: AppColors.success,
-                    bg: AppColors.successLight,
+                    accent: AppColors.accent,
+                    bg: AppColors.accentLight,
                     onTap: widget.onOpenRollCall!,
                   ),
                 if (widget.onOpenLeads != null)
@@ -141,8 +143,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     icon: Icons.support_agent_rounded,
                     label: 'Leads',
                     count: '${d.leads.where((l) => !l.isResolved).length}',
-                    accent: AppColors.warning,
-                    bg: AppColors.warningLight,
+                    accent: AppColors.accentC,
+                    bg: AppColors.accentC.withValues(alpha: 0.12),
                     onTap: widget.onOpenLeads!,
                   ),
               ];

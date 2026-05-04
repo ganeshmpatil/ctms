@@ -6,6 +6,7 @@ import '../widgets/glass.dart';
 import 'admin/admin_divisions.dart';
 import 'admin/admin_leads.dart';
 import 'admin/admin_subjects.dart';
+import 'admin/admin_users.dart';
 import 'dashboard.dart';
 import 'login.dart';
 import 'profile.dart';
@@ -53,15 +54,95 @@ class _HomeShellState extends State<HomeShell> {
     final isStaff = role == 'staff';
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.bg1,
-      appBar: AppBar(
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu_rounded),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
+      backgroundColor: AppColors.pageBg,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [NatureColors.dark, NatureColors.medium],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                Builder(
+                  builder: (ctx) => IconButton(
+                    icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                ),
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: NatureColors.cream.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.eco_rounded,
+                      color: NatureColors.cream, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Gravity',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        title: const Text('Gravity'),
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: NatureColors.dark,
+          border: Border(
+            top: BorderSide(color: NatureColors.medium, width: 0.5),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.eco_rounded,
+                        size: 14, color: NatureColors.light),
+                    SizedBox(width: 6),
+                    Text(
+                      'Gravity · CTMS',
+                      style: TextStyle(
+                        color: NatureColors.cream,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'v0.4.0',
+                  style: TextStyle(
+                    color: NatureColors.light,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       drawer: _AppDrawer(
         api: widget.api,
@@ -76,6 +157,9 @@ class _HomeShellState extends State<HomeShell> {
             : null,
         onSubjects: isAdmin
             ? () => _go(() => AdminSubjectsScreen(api: widget.api))
+            : null,
+        onUsers: isAdmin
+            ? () => _go(() => AdminUsersScreen(api: widget.api))
             : null,
         onLeads: (isAdmin || isStaff)
             ? () => _go(() => AdminLeadsScreen(api: widget.api))
@@ -119,6 +203,7 @@ class _AppDrawer extends StatelessWidget {
   final VoidCallback? onRollCall;
   final VoidCallback? onDivisions;
   final VoidCallback? onSubjects;
+  final VoidCallback? onUsers;
   final VoidCallback? onLeads;
   final VoidCallback onProfile;
   final VoidCallback onSettings;
@@ -132,6 +217,7 @@ class _AppDrawer extends StatelessWidget {
     required this.onRollCall,
     required this.onDivisions,
     required this.onSubjects,
+    required this.onUsers,
     required this.onLeads,
     required this.onProfile,
     required this.onSettings,
@@ -234,6 +320,13 @@ class _AppDrawer extends StatelessWidget {
                       label: 'Subjects',
                       badge: 'ADMIN',
                       onTap: onSubjects!,
+                    ),
+                  if (onUsers != null)
+                    _DrawerItem(
+                      icon: Icons.manage_accounts_rounded,
+                      label: 'Users',
+                      badge: 'ADMIN',
+                      onTap: onUsers!,
                     ),
                   if (onLeads != null)
                     _DrawerItem(

@@ -36,7 +36,7 @@ class GravityApp extends StatelessWidget {
             useMaterial3: true,
             brightness: Brightness.light,
             colorScheme: scheme,
-            scaffoldBackgroundColor: AppColors.bg1,
+            scaffoldBackgroundColor: AppColors.pageBg,
             appBarTheme: AppBarTheme(
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.text,

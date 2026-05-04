@@ -87,7 +87,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bg2,
         title: const Text('Year-end reset',
-            style: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: AppColors.text)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,12 +102,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
             ),
             const SizedBox(height: 14),
             const Text('Type the division name to confirm:',
-                style: TextStyle(color: Colors.white, fontSize: 13)),
+                style: TextStyle(color: AppColors.text, fontSize: 13)),
             const SizedBox(height: 8),
             TextField(
               controller: controller,
               autofocus: true,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.text),
               decoration: glassInputDecoration(label: div.label),
             ),
           ],
@@ -164,7 +164,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                   children: [
                     const Text('Students',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.text,
                             fontSize: 24,
                             fontWeight: FontWeight.w800)),
                     const Spacer(),
@@ -201,7 +201,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                 child: TextField(
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.text),
                   decoration: glassInputDecoration(
                     label: 'Search by name…',
                     icon: Icons.search_rounded,
@@ -250,12 +250,12 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Icon(Icons.error_outline_rounded,
-                                        size: 36, color: Colors.white70),
+                                        size: 36, color: AppColors.muted),
                                     const SizedBox(height: 8),
                                     Text(_err!,
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                            color: Colors.white)),
+                                            color: AppColors.text)),
                                     const SizedBox(height: 12),
                                     GradientButton(
                                       label: 'Retry',
@@ -384,7 +384,7 @@ class _DivisionChip extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.white,
+              color: selected ? Colors.white : AppColors.text,
               fontSize: 12,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
@@ -436,7 +436,7 @@ class _StudentTile extends StatelessWidget {
               children: [
                 Text(student.name,
                     style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.text,
                         fontSize: 15,
                         fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
