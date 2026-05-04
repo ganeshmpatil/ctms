@@ -1,5 +1,8 @@
 p, admin, /*, *
 
+# Any authenticated role can change their own password.
+p, *, /me/password, POST
+
 p, teacher, /students, GET
 p, teacher, /students, POST
 p, teacher, /students/*, GET

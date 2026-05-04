@@ -17,6 +17,9 @@ func RegisterRoutes(mux *http.ServeMux, db *gorm.DB) {
 	mux.HandleFunc("POST /auth/register", h.register)
 	mux.HandleFunc("POST /auth/login", h.login)
 	mux.HandleFunc("GET /auth/me", h.me)
+	mux.HandleFunc("POST /me/password", h.changePassword)
+	mux.HandleFunc("GET /admin/users", h.listUsers)
+	mux.HandleFunc("POST /admin/users/{id}/reset-password", h.adminResetPassword)
 }
 
 var allowedRoles = map[string]bool{
@@ -115,4 +118,109 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 		"role":  claims.Role,
 		"exp":   claims.ExpiresAt,
 	})
+}
+
+// changePassword lets the logged-in user change their own password.
+// Requires the current password as confirmation.
+func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
+	id := IdentityFromCtx(r.Context())
+	if id == nil {
+		httpx.WriteJSON(w, http.StatusUnauthorized,
+			map[string]string{"error": "unauthenticated"})
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+	if len(req.NewPassword) < 6 {
+		httpx.BadRequest(w, "new_password must be at least 6 characters")
+		return
+	}
+
+	var u User
+	if err := h.db.WithContext(r.Context()).First(&u, "id = ?", id.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			httpx.NotFound(w)
+			return
+		}
+		httpx.ServerError(w, err)
+		return
+	}
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(u.PasswordHash), []byte(req.CurrentPassword)); err != nil {
+		httpx.WriteJSON(w, http.StatusUnauthorized,
+			map[string]string{"error": "current password is incorrect"})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	if err := h.db.WithContext(r.Context()).
+		Model(&u).
+		Update("password_hash", string(hash)).Error; err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// listUsers returns all auth users (admin only).
+func (h *Handler) listUsers(w http.ResponseWriter, r *http.Request) {
+	out := make([]User, 0)
+	if err := h.db.WithContext(r.Context()).
+		Order("role, email").
+		Find(&out).Error; err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, out)
+}
+
+// adminResetPassword lets an admin set any user's password to a new value.
+// No "current password" check — admin is trusted.
+func (h *Handler) adminResetPassword(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("id")
+	var req struct {
+		NewPassword string `json:"new_password"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.BadRequest(w, err.Error())
+		return
+	}
+	if len(req.NewPassword) < 6 {
+		httpx.BadRequest(w, "new_password must be at least 6 characters")
+		return
+	}
+
+	var u User
+	if err := h.db.WithContext(r.Context()).First(&u, "id = ?", userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			httpx.NotFound(w)
+			return
+		}
+		httpx.ServerError(w, err)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	if err := h.db.WithContext(r.Context()).
+		Model(&u).
+		Update("password_hash", string(hash)).Error; err != nil {
+		httpx.ServerError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
